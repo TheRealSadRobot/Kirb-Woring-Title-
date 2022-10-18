@@ -6,10 +6,12 @@ Sheet = pygame.image.load("Kirbo Sprites.png")
 #metadata for spritesheet
 Datafile = json.load(open("Support.json"))
 
+levelTileSet = "Beach"
+
 def loadLevel(Receptacle):
     for y in range(len(Datafile["Layouts"]["Main Room"])):
         for x in range(len(Datafile["Layouts"]["Main Room"][y])):
-            tilecoordinates = Datafile["Terrain"]["SpriteCoordinates"]["Castle"][Datafile["Tilekey"][str(Datafile["Layouts"]["Main Room"][y][x])]]
+            tilecoordinates = Datafile["Terrain"]["SpriteCoordinates"][levelTileSet][Datafile["Tilekey"][str(Datafile["Layouts"]["Main Room"][y][x])]]
             Receptacle.blit(Sheet, (x*8,y*8),(tilecoordinates[0],tilecoordinates[1],8,8))
 
 def pallateApply(pallate, sprite):

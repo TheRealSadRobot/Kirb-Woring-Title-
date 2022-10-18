@@ -227,6 +227,34 @@
                 "Celing4":[24,24],
                 "Wall4":[32,24],
                 "Ladder4":[40,24]
+            },
+            "Beach":
+            {
+                "Air":[48,48],
+                "FloorStraight1":[48,0],
+                "Deepfloor1":[56,0],
+                "Floor451":[64,0],
+                "Celing1":[72,0],
+                "Wall1":[80,0],
+                "Ladder1":[88,0],
+                "FloorStraight2":[48,8],
+                "Deepfloor2":[56,8],
+                "Floor452":[64,8],
+                "Celing2":[72,8],
+                "Wall2":[80,8],
+                "Ladder2":[88,8],
+                "FloorStraight3":[48,0],
+                "Deepfloor3":[56,0],
+                "Floor453":[64,0],
+                "Celing3":[72,0],
+                "Wall3":[80,0],
+                "Ladder3":[88,0],
+                "FloorStraight4":[48,8],
+                "Deepfloor4":[56,8],
+                "Floor454":[64,8],
+                "Celing4":[72,8],
+                "Wall4":[80,8],
+                "Ladder4":[88,8]
             }
         },
         "CollisionData":

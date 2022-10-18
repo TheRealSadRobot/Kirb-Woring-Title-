@@ -12,11 +12,12 @@ import levelLib
 import time
 #create window
 pygame.init()
+screenscale = 2
 winsizex = 256
 winsizey = 240
 xval = 0
 yval = 0
-window = pygame.display.set_mode((winsizex,winsizey))
+window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 fpstimer = pygame.time.Clock()
 
 #title screen:
@@ -57,7 +58,7 @@ Objects = []
 TileLayer = pygame.Surface((winsizex, winsizey))
 charLayer = pygame.Surface((winsizex, winsizey))
 charLayer.set_colorkey((0,0,0))
-display = pygame.Surface((winsizex,winsizey))
+displayPane = pygame.Surface((winsizex,winsizey))
 
 levelLib.loadLevel(TileLayer)
 Player = gameLib.Character("Kirby","player",56,100,Objects,charLayer, "Normal")
@@ -69,10 +70,10 @@ while True:
     for item in Objects:
         item.update()
     #draw the frame
-    display.blit(TileLayer, (0,0))
-    display.blit(charLayer, (0,0))
+    displayPane.blit(TileLayer, (0,0))
+    displayPane.blit(charLayer, (0,0))
     charLayer.fill((0,0,0))
-    window.blit(display, (0,0))
+    window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
     #put the stuff from the frame onto the window
     pygame.display.flip()
     #code for quitting
