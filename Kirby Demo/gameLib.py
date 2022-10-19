@@ -13,8 +13,9 @@ class Character:
         self.behaviorType = behaviorType
         self.speed = [0,0]
         self.location =[xlocation, ylocation]
+        self.dir = "right"
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.fallSpeed = 5
+        self.fallSpeed = 4
         self.grounded = False
         #current sprite
         self.animFrame = "Idle1"
@@ -38,11 +39,15 @@ class Character:
         self.animFrame = Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][0]
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.spriteCoordinates = Datafile["Character"]["SpriteCoordinates"][self.charName][self.animFrame]
+        #print(f"{self.grounded}\b")
         
         pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
-        self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
+        if self.dir == "right":
+            self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
+        else:
+            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -94,24 +99,52 @@ class Character:
             #set other char to default value
         pass
     def playerscript(self):
+        #run physics sim
+        if self.grounded == False:
+            if self.speed[1] < self.fallSpeed:
+                self.speed[1] += 1
+            else:
+                self.speed[1] = self.fallSpeed
+        else:
+            self.speed[1] = 0
+        #grounded and ungrounded
         #check for input
-        if pygame.key.get_pressed()[pygame.K_LEFT]and self.blockedLeft == False:
-            self.speed[0] = -1
-        elif pygame.key.get_pressed()[pygame.K_RIGHT]and self.blockedRight == False:
-            self.speed[0] = 1
+        if pygame.key.get_pressed()[pygame.K_LEFT]:
+            self.dir = "left"
+            #if not blocked on left side
+            if self.blockedLeft == False:
+                self.speed[0] = -1
+        elif pygame.key.get_pressed()[pygame.K_RIGHT]:
+            self.dir = "right"
+            if self.blockedRight == False:
+                self.speed[0] = 1
         else:
             self.speed[0] = 0
-        if pygame.key.get_pressed()[pygame.K_SPACE]and self.grounded == True:
-            self.speed[1] = -10
+        #grounded only
+        if self.grounded == True:
+            if pygame.key.get_pressed()[pygame.K_RIGHT] or pygame.key.get_pressed()[pygame.K_LEFT]:
+                self.playAnimation("Walk")
+            else:
+                self.playAnimation("Idle")
+            if pygame.key.get_pressed()[pygame.K_SPACE]:
+                self.playAnimation("Jump")
+                self.speed[1] = -12
+                self.grounded = False
+        #ungrounded only
+        elif self.grounded == False:
+            if self.speed[1] > 0:
+                self.playAnimation("Fall")
+            else:
+                self.playAnimation("Jump")
         #check for collisions
         self.bottom = [self.location[0]+8,self.location[1]+16]
         if self.collisionCheck(self.bottom) == True:
             itr = 1
             while True:
-                if self.collisionCheck([self.bottom[0],self.bottom[1]-itr]) == True:
+                if self.collisionCheck([self.bottom[0],self.bottom[1]-(itr)]) == True:
                     itr+= 1
                 else:
-                    self.location[1] -= itr
+                    self.location[1] -= itr-1
                     break
             self.grounded = True
         else:
@@ -142,15 +175,6 @@ class Character:
             self.blockedRight = True
         else:
             self.blockedRight = False
-            
-        #run physics sim
-        if self.grounded == False:
-            if self.speed[1] < self.fallSpeed:
-                self.speed[1] += 1
-            else:
-                self.speed[1] = self.fallSpeed
-        else:
-            self.speed[1] = 0
         
     def npcscript(self):
         pass
