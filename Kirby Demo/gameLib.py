@@ -15,7 +15,8 @@ class Character:
         self.location =[xlocation, ylocation]
         self.dir = "right"
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.fallSpeed = 4
+        self.fallSpeed = 5
+        self.jumpHeight = 15
         self.grounded = False
         #current sprite
         self.animFrame = "Idle1"
@@ -81,7 +82,7 @@ class Character:
     
     def move(self):
         self.location[0] += self.speed[0]
-        self.location[1] += self.speed[1]
+        self.location[1] = int(self.location[1] + self.speed[1]/2)
         
     def clicked(self):
         #display annoyed sprite
@@ -128,7 +129,7 @@ class Character:
                 self.playAnimation("Idle")
             if pygame.key.get_pressed()[pygame.K_SPACE]:
                 self.playAnimation("Jump")
-                self.speed[1] = -12
+                self.speed[1] = -self.jumpHeight
                 self.grounded = False
         #ungrounded only
         elif self.grounded == False:
@@ -136,6 +137,7 @@ class Character:
                 self.playAnimation("Fall")
             else:
                 self.playAnimation("Jump")
+
         #check for collisions
         self.bottom = [self.location[0]+8,self.location[1]+16]
         if self.collisionCheck(self.bottom) == True:
@@ -150,27 +152,27 @@ class Character:
         else:
             self.grounded = False
             
-        self.left = [self.location[0],self.location[1]+8]
+        self.left = [self.location[0],self.location[1]+7]
         if self.collisionCheck(self.left) == True:
             itr = 1
             while True:
                 if self.collisionCheck([self.left[0]+itr,self.left[1]]) == True:
                     itr += 1
                 else:
-                    self.location[0] += itr
+                    self.location[0] += itr-1
                     break
             self.blockedLeft = True
         else:
             self.blockedLeft = False
             
-        self.right = [self.location[0]+16,self.location[1]+8]
+        self.right = [self.location[0]+16,self.location[1]+7]
         if self.collisionCheck(self.right) == True:
             itr = 1
             while True:
                 if self.collisionCheck([self.right[0]-itr,self.right[1]]) == True:
                     itr += 1
                 else:
-                    self.location[0] -= itr
+                    self.location[0] -= itr-1
                     break
             self.blockedRight = True
         else:
