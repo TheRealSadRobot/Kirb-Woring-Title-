@@ -27,7 +27,7 @@ class Character:
         #add to array of all objects
         arrayDestination.append(self)
         
-    def update(self):
+    def update(self, cam):
         self.move()
         self.animate()
         #if behaviorType = player
@@ -42,7 +42,7 @@ class Character:
         pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
-        self.renderLayer.blit(self.sprite, (self.location[0],self.location[1]), (0,0,16,16))
+        self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:

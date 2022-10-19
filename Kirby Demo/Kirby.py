@@ -9,6 +9,7 @@ Purpose: serve some function in a fun way
 import pygame
 import gameLib
 import levelLib
+import camLib
 import time
 #create window
 pygame.init()
@@ -60,19 +61,23 @@ charLayer = pygame.Surface((winsizex, winsizey))
 charLayer.set_colorkey((0,0,0))
 displayPane = pygame.Surface((winsizex,winsizey))
 
-levelLib.loadLevel(TileLayer)
+MainRoom = levelLib.Level("Beach", "Main Room")
 Player = gameLib.Character("Kirby","player",56,100,Objects,charLayer, "Normal")
 NPCCircumference = gameLib.Character("Kirby","npc",24,100,Objects,charLayer, "Ice")
+mainCam = camLib.Camera(Player,MainRoom)
 #loop
 while True:
+    MainRoom.loadLevel(TileLayer, mainCam)
     fpstimer.tick(60)
     #update gameobjects
     for item in Objects:
-        item.update()
+        item.update(mainCam)
+    mainCam.update()
     #draw the frame
     displayPane.blit(TileLayer, (0,0))
     displayPane.blit(charLayer, (0,0))
     charLayer.fill((0,0,0))
+    TileLayer.fill((0,0,0))
     window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
     #put the stuff from the frame onto the window
     pygame.display.flip()
