@@ -1,6 +1,7 @@
 # Kirb-Woring-Title-
 A platformer Starring Nintendo & HAL icon, Kirby! Just a demo for now.
-##CREDITS
+
+ ## CREDITS
  - Kibry Sprites: from Kirby's Adventure (NES), ripped by Drshnaps on Spriter's Resource, enhanced by Sad Robot
  
  - Terrain Sprites: Sad Robot
