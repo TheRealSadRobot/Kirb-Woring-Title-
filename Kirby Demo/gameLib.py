@@ -138,6 +138,11 @@ class Character:
                 self.playAnimation("Fall")
             else:
                 self.playAnimation("Jump")
+                
+            if pygame.key.get_pressed()[pygame.K_SPACE]:
+                self.playAnimation("Jump")
+                self.speed[1] = -self.jumpHeight/2
+                self.grounded = False
 
         #top blocked only
         if self.blockedTop == True:
