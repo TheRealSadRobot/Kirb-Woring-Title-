@@ -25,6 +25,7 @@ class Character:
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.animItr = 0
         self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
+        self.blockedTop = False
         self.renderLayer = renderLayer
         #add to array of all objects
         arrayDestination.append(self)
@@ -138,6 +139,10 @@ class Character:
             else:
                 self.playAnimation("Jump")
 
+        #top blocked only
+        if self.blockedTop == True:
+            self.speed[1] = 1
+
         #check for collisions
         self.bottom = [self.location[0]+8,self.location[1]+16]
         if self.collisionCheck(self.bottom) == True:
@@ -149,8 +154,24 @@ class Character:
                     self.location[1] -= itr-1
                     break
             self.grounded = True
+        elif self.collisionCheck((self.bottom[0], self.bottom[1]+1)) == True:
+            self.location[1] += 1
+            self.grounded = True
         else:
             self.grounded = False
+
+        self.top = [self.location[0]+8,self.location[1]]
+        if self.collisionCheck(self.top) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.top[0],self.top[1]+(itr)]) == True:
+                    itr+= 1
+                else:
+                    self.location[1] += itr-1
+                    break
+            self.blockedTop = True
+        else:
+            self.blockedTop = False
             
         self.left = [self.location[0],self.location[1]+7]
         if self.collisionCheck(self.left) == True:
