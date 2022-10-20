@@ -26,6 +26,8 @@ class Character:
         self.animItr = 0
         self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
         self.blockedTop = False
+        self.float = False
+        self.flap = False
         self.renderLayer = renderLayer
         #add to array of all objects
         arrayDestination.append(self)
@@ -101,6 +103,7 @@ class Character:
             #set other char to default value
         pass
     def playerscript(self):
+        print(self.flap, self.float)
         #run physics sim
         if self.grounded == False:
             if self.speed[1] < self.fallSpeed:
@@ -108,15 +111,17 @@ class Character:
             else:
                 self.speed[1] = self.fallSpeed
         else:
+            self.float = False
             self.speed[1] = 0
         #grounded and ungrounded
         #check for input
-        if pygame.key.get_pressed()[pygame.K_LEFT]:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
             self.dir = "left"
             #if not blocked on left side
             if self.blockedLeft == False:
                 self.speed[0] = -1
-        elif pygame.key.get_pressed()[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT]:
             self.dir = "right"
             if self.blockedRight == False:
                 self.speed[0] = 1
@@ -124,11 +129,13 @@ class Character:
             self.speed[0] = 0
         #grounded only
         if self.grounded == True:
-            if pygame.key.get_pressed()[pygame.K_RIGHT] or pygame.key.get_pressed()[pygame.K_LEFT]:
+            self.float == False
+            if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
                 self.playAnimation("Walk")
             else:
                 self.playAnimation("Idle")
-            if pygame.key.get_pressed()[pygame.K_SPACE]:
+            if keys[pygame.K_SPACE]:
+                self.flap = True
                 self.playAnimation("Jump")
                 self.speed[1] = -self.jumpHeight
                 self.grounded = False
@@ -138,6 +145,19 @@ class Character:
                 self.playAnimation("Fall")
             else:
                 self.playAnimation("Jump")
+            if keys[pygame.K_SPACE]:
+                self.float = True
+                if self.flap == False:
+                    self.flap = True
+                    self.playAnimation("Jump")
+                    self.speed[1] = -self.jumpHeight/2
+            else:
+                self.flap = False
+                
+            if self.float == True:
+                self.fallSpeed = 4
+            else:
+                self.fallSpeed = 7
 
         #top blocked only
         if self.blockedTop == True:
