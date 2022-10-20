@@ -61,7 +61,7 @@ charLayer = pygame.Surface((winsizex, winsizey))
 charLayer.set_colorkey((0,0,0))
 displayPane = pygame.Surface((winsizex,winsizey))
 
-MainRoom = levelLib.Level("Military Base", "Main Room")
+MainRoom = levelLib.Level("Beach", "Main Room")
 Player = gameLib.Character("Kirby","player",56,100,Objects,charLayer, "Normal")
 NPCCircumference = gameLib.Character("Kirby","npc",24,100,Objects,charLayer, "Ice")
 mainCam = camLib.Camera(Player,MainRoom)

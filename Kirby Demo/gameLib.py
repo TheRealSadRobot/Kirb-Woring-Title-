@@ -15,7 +15,7 @@ class Character:
         self.location =[xlocation, ylocation]
         self.dir = "right"
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.fallSpeed = 5
+        self.fallSpeed = 7
         self.jumpHeight = 15
         self.grounded = False
         #current sprite
@@ -141,7 +141,7 @@ class Character:
 
         #top blocked only
         if self.blockedTop == True:
-            self.speed[1] = 1
+            self.speed[1] = 2
 
         #check for collisions
         self.bottom = [self.location[0]+8,self.location[1]+16]
