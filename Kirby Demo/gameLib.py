@@ -21,6 +21,7 @@ class Character:
         #current sprite
         self.animFrame = "Idle1"
         self.animFrameNumber = 0
+        self.mod = 0
         self.animation = "Idle"
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.animItr = 0
@@ -103,7 +104,7 @@ class Character:
             #set other char to default value
         pass
     def playerscript(self):
-        print(self.flap, self.float)
+        
         #run physics sim
         if self.grounded == False:
             if self.speed[1] < self.fallSpeed:
@@ -128,17 +129,24 @@ class Character:
         else:
             self.speed[0] = 0
         #grounded only
+        print(self.speed[1])
         if self.grounded == True:
-            self.float == False
+            self.float = False
             if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
                 self.playAnimation("Walk")
             else:
                 self.playAnimation("Idle")
             if keys[pygame.K_SPACE]:
-                self.flap = True
-                self.playAnimation("Jump")
-                self.speed[1] = -self.jumpHeight
-                self.grounded = False
+                if self.flap == False:
+                    if self.mod == 1:
+                        self.flap = True
+                    self.mod = 1
+                    self.grounded = False
+                    self.playAnimation("Jump")
+                    self.speed[1] = -(self.jumpHeight)
+            else:
+                self.flap = False
+                self.mod = 0
         #ungrounded only
         elif self.grounded == False:
             if self.speed[1] > 0:
@@ -146,16 +154,17 @@ class Character:
             else:
                 self.playAnimation("Jump")
             if keys[pygame.K_SPACE]:
-                self.float = True
                 if self.flap == False:
                     self.flap = True
+                    if self.float == False:
+                        self.float = True
                     self.playAnimation("Jump")
                     self.speed[1] = -self.jumpHeight/2
             else:
                 self.flap = False
                 
             if self.float == True:
-                self.fallSpeed = 4
+                self.fallSpeed = 2
             else:
                 self.fallSpeed = 7
 
