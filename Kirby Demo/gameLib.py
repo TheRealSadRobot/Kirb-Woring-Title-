@@ -23,6 +23,8 @@ class Character:
         self.animFrameNumber = 0
         self.mod = 0
         self.animation = "Idle"
+        self.animType = "Loop"
+        self.animBacklog = "Fall"
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.animItr = 0
         self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
@@ -32,6 +34,7 @@ class Character:
         self.renderLayer = renderLayer
         #add to array of all objects
         arrayDestination.append(self)
+        self.playAnimationOnce("Inflate","Idle")
         
     def update(self, cam):
         self.move()
@@ -45,14 +48,14 @@ class Character:
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.spriteCoordinates = Datafile["Character"]["SpriteCoordinates"][self.charName][self.animFrame]
         #print(f"{self.grounded}\b")
-        
-        pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
+        self.sprite = pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
+        #print(self.sprite.get_size())
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
         if self.dir == "right":
-            self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
+            self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
         else:
-            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]-cam.xpos,self.location[1]), (0,0,16,16))
+            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]-cam.xpos,self.location[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -67,9 +70,21 @@ class Character:
 
     def playAnimation(self, animationName):
         if animationName != self.animation:
+            if self.animType == "Stop":
+                self.animBacklog = animationName
+            else:
+                self.animItr = 0
+                self.animType = "Loop"
+                self.animFrameNumber = 0
+                self.animation = animationName
+
+    def playAnimationOnce(self, animationName, animNext):
+        if animationName != self.animation:
             self.animItr = 0
+            self.animType = "Stop"
             self.animFrameNumber = 0
             self.animation = animationName
+            self.animBacklog = animNext
         
     def animate(self):
         self.animItr += 1
@@ -77,9 +92,12 @@ class Character:
             self.animFrameNumber += 1
             self.animItr = 0
         if self.animFrameNumber == len(Datafile["Character"]["Animations"][self.charName][self.animation]):
-            self.animFrameNumber = 0
-            self.animItr = 0
-        
+            if self.animType == "Loop":
+                self.animFrameNumber = 0
+                self.animItr = 0
+            else:
+                self.animType = "Loop"
+                self.playAnimation(self.animBacklog)
     def moveTo(self):
         #move to the set location at the given speed
         pass
@@ -129,7 +147,9 @@ class Character:
         else:
             self.speed[0] = 0
         #grounded only
-        print(self.speed[1])
+        #print(self.speed[1])
+        #print(self.flap)
+        #print(self.animation)
         if self.grounded == True:
             self.float = False
             if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
@@ -149,16 +169,27 @@ class Character:
                 self.mod = 0
         #ungrounded only
         elif self.grounded == False:
+            if self.speed[1] == 0:
+                if self.animation == "Fall":
+                    pass
+                else:
+                    self.playAnimationOnce("Roll","Fall")
             if self.speed[1] > 0:
-                self.playAnimation("Fall")
+                if self.float == False:
+                    self.playAnimation("Fall")
+                else:
+                    self.playAnimation("Float")
             else:
-                self.playAnimation("Jump")
+                if self.float == False:
+                    self.playAnimation("Jump")
             if keys[pygame.K_SPACE]:
                 if self.flap == False:
                     self.flap = True
                     if self.float == False:
                         self.float = True
-                    self.playAnimation("Jump")
+                        self.playAnimationOnce("Inflate", "Float")
+                    else:
+                        self.playAnimationOnce("Flap","Float")
                     self.speed[1] = -self.jumpHeight/2
             else:
                 self.flap = False
