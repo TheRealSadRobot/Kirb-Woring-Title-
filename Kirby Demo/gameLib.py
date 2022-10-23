@@ -6,11 +6,10 @@ Sheet = pygame.image.load("Kirbo Sprites.png")
 #metadata for spritesheet
 Datafile = json.load(open("Support.json"))
 
-class Character:
-    def __init__(self, charName, behaviorType, xlocation, ylocation, arrayDestination,renderLayer, pallate):
+class Object:
+    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
         self.charName = charName
         #behavior type
-        self.behaviorType = behaviorType
         self.speed = [0,0]
         self.location =[xlocation, ylocation]
         self.dir = "right"
@@ -18,6 +17,7 @@ class Character:
         self.fallSpeed = 7
         self.jumpHeight = 15
         self.grounded = False
+        self.currentLevel = Level
         #current sprite
         self.animFrame = "Idle1"
         self.animFrameNumber = 0
@@ -33,15 +33,11 @@ class Character:
         self.flap = False
         self.renderLayer = renderLayer
         #add to array of all objects
-        arrayDestination.append(self)
-        self.playAnimationOnce("Inflate","Idle")
+        (arrayDestination).append(self)
         
     def update(self, cam):
         self.move()
         self.animate()
-        #if behaviorType = player
-        if self.behaviorType.lower() == "player":
-            self.playerscript()
         #if clicked
         #render sprite at location
         self.animFrame = Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][0]
@@ -105,24 +101,52 @@ class Character:
     def move(self):
         self.location[0] += self.speed[0]
         self.location[1] = int(self.location[1] + self.speed[1]/2)
-        
-    def clicked(self):
-        #display annoyed sprite
-        pass
-    def interact(self):
-        #if mode is NPC
-            #check metadata for text
-            #load text
-            #paint
-        #if mode is char statue:
-            #check for what statue it is:
-            #set player to statue char
-            #set statue to player char
-            #set statue char to player char
-            #set other char to default value
-        pass
-    def playerscript(self):
-        
+    
+    def collisionCheck(self, point):
+        try:
+            #check all four points on character.
+            #find what tile type they are on
+            tilecountx = (point[0]//8)
+            tilecounty = (point[1]//8)
+            tilenum = str(self.currentLevel.collisionData[tilecounty][tilecountx])
+            tiletype = (Datafile["Tilekey"][tilenum])
+            #print(tiletype)
+            if tiletype != "Air":
+                if self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 1:
+                    if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][8-point[0]%8][point[1]%8] == 1:
+                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        return True
+                    else:
+                        return False
+                elif self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 2:
+                    if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][8-point[1]%8] == 1:
+                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        return True
+                    else:
+                        return False
+                elif self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 3:
+                    if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][8-point[0]%8][8-point[1]%8] == 1:
+                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        return True
+                    else:
+                        return False
+                else:
+                    if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][point[1]%8] == 1:
+                        selfrenderLayer.fill((0,255,0), ((point[0],point[1]), (0,0)))
+                        return True
+                    else:
+                        return False
+            else:
+                return False
+        except:
+            return True
+
+class Player(Object):
+    def update(self,cam):
+        Object.update(self,cam)
+        self.playerScript()
+
+    def playerScript(self):
         #run physics sim
         if self.grounded == False:
             if self.speed[1] < self.fallSpeed:
@@ -258,27 +282,9 @@ class Character:
             self.blockedRight = True
         else:
             self.blockedRight = False
-        
-    def npcscript(self):
-        pass
-    def collisionCheck(self, point):
-        try:
-            #check all four points on character.
-            #find what tile type they are on
-            tilecountx = (point[0]//8)
-            tilecounty = (point[1]//8)
-            tilenum = str(Datafile["Layouts"]["Main Room"][tilecounty][tilecountx])
-            tiletype = (Datafile["Tilekey"][tilenum])
-            #print(tiletype)
-            if tiletype != "Air":
-                if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][point[1]%8] == 1:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        except:
-            return True
-        
-#class textBox:
-
+class NPC(Object):
+    pass
+#class Item(Object):
+#class Block(Object):
+#class Enemy(Object):
+#class Trigger(Object):
