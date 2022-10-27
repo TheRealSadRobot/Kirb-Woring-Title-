@@ -1,20 +1,17 @@
 #class camera:
 class Camera:
-    def __init__(self, focus, level):
-        self.xpos = 0
-        self.ypos = 0
-        self.__focus = focus
-        self.__currentLevel = level
-        self.__focusx = 0
-        self.__focusy = 0
-        self.mode = "Follow"
-    def __init__(self, level):
+    def __init__(self, level, focus):
         self.xpos = 0
         self.ypos = 0
         self.__currentLevel = level
         self.__focusx = 0
         self.__focusy = 0
-        self.mode = "Control"
+        if focus == None:
+            self.mode = "Control"
+        else:
+            self.mode = "Follow"
+            self.__focus = focus
+
     def update(self):
         if self.mode == "Follow":
             self.__focusx = self.__focus.location[0]

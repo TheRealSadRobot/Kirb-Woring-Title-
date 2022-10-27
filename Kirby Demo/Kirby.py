@@ -63,7 +63,7 @@ displayPane = pygame.Surface((winsizex,winsizey))
 
 MainRoom = levelLib.Level("Castle", "TestRoom1",Objects,charLayer)
 Player = gameLib.Player("Kirby",56,100,Objects,charLayer, "Normal",MainRoom)
-mainCam = camLib.Camera(Player,MainRoom)
+mainCam = camLib.Camera(MainRoom,Player)
 #loop
 while True:
     MainRoom.loadLevel(TileLayer, mainCam)
