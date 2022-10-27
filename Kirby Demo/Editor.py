@@ -11,6 +11,8 @@ screenscale = 3
 winsizex = 256
 winsizey = 240
 levelObjects = []
+itr = 0
+tiletype = 1
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 charLayer = pygame.Surface((winsizex, winsizey))
 tileLayer = pygame.Surface((winsizex, winsizey))
@@ -57,11 +59,20 @@ def main():
         
 #def placeblocks
 def placeBlocks(level, camera):
-    #if square of level is clicked:
     rawLocale = pygame.mouse.get_pos()
     cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
     collisionCheck(cursorSpot,level,camera)
-            #place a block there
+    #if square of level is clicked:
+    #print((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)
+    #print((cursorSpot[1]-cursorSpot[1]%8)/8)
+    if pygame.mouse.get_pressed(3) == (1,0,0):
+        #place a block there
+        row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row[int((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)] = tiletype
+    elif pygame.mouse.get_pressed(3) == (0,1,0):
+        #place a block there
+        row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row[int((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)] = 0
         #if add row button is pressed:
             #add a row
         #if add column button is pressed:
@@ -77,18 +88,23 @@ def placeBlocks(level, camera):
 
 #collision Detection
 def collisionCheck(point,level, camera):
-    try:
-        #check all four points on character.
-        #find what tile type they are on
-        tilecountx = ((point[0]+camera.xpos)//8)
-        tilecounty = (point[1]//8)
-        tilenum = str(level.collisionData[tilecounty][tilecountx])
-        tiletype = (Datafile["Tilekey"][tilenum])
-        #print(tiletype)
+    global itr
+    #check all four points on character.
+    #find what tile type they are on
+    tilecountx = ((point[0]+camera.xpos)//8)
+    tilecounty = (point[1]//8)
+    tilenum = str(level.collisionData[tilecounty][tilecountx])
+    tiletype = (Datafile["Tilekey"][tilenum])
+    #print(tiletype)
+    if itr < 30:
         pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8,8,8),1)
-        """if tiletype != "Air":
-                if level.file["FlipMap"][tilecounty][tilecountx] != 0:
-                        print("flipped")
-                        time.wait(1)"""
-        return tileType
+        itr += 1
+    elif itr > 0:
+        pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8,8,8),1)
+        itr -= 1
+    """if tiletype != "Air":
+            if level.file["FlipMap"][tilecounty][tilecountx] != 0:
+                    print("flipped")
+                    time.wait(1)"""
+    return tiletype
 main()
