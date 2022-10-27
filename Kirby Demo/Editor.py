@@ -4,6 +4,8 @@ import camLib
 import json
 import pygame
 import time
+import tkinter
+from PIL import Image, ImageTk
 
 #setup
 pygame.init()
@@ -14,6 +16,8 @@ levelObjects = []
 itr = 0
 tiletype = 1
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
+pygame.display.set_caption("Kirby's Dream Level Editor")
+pygame.display.set_icon(pygame.image.load("EditorLogo.png"))
 charLayer = pygame.Surface((winsizex, winsizey))
 tileLayer = pygame.Surface((winsizex, winsizey))
 displayPane = pygame.Surface((winsizex,winsizey))
@@ -30,6 +34,9 @@ Datafile = json.load(open("Support.json"))
 def main():
     level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
     mainCam = camLib.Camera(level,None)
+    toolbarMake()
+    #toolbarThread = threading.Thread(target = toolbarMake)
+    #toolbarThread.start()
     #while True
     while True:
         #put the stuff from the frame onto the window
@@ -47,6 +54,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                try:
+                    toolbar.destroy()
+                except:
+                    pass
                 quit()
         #display Level
         level.loadLevel(tileLayer, mainCam)
@@ -56,14 +67,28 @@ def main():
         placeBlocks(level, mainCam)
         window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
         tileLayer.fill((0,0,0))
+        toolbar.update()
         
+def toolbarMake():
+    #tkinter window for change block type and select tools
+    global toolbar
+    toolbar = tkinter.Tk()
+    toolbar.title("Tools")
+    toolbar.wm_iconphoto(False, ImageTk.PhotoImage(Image.open("ToolboxIcon.png")))
+    toolbar.geometry(f"{winsizex}x{winsizey}")
+    #add a list of all block types
+    Tilebox = tkinter.Listbox(toolbar)
+    #change block type if list entry is clicked
+    #tool to flip tiles
+    #tool to add objects
+    #toolbar.mainloop()
 #def placeblocks
 def placeBlocks(level, camera):
     rawLocale = pygame.mouse.get_pos()
     cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
     collisionCheck(cursorSpot,level,camera)
     #if square of level is clicked:
-    print(int((cursorSpot[0]-cursorSpot[0]%8+(camera.xpos-camera.xpos%8)/8)))
+    #print(int((cursorSpot[0]-cursorSpot[0]%8+(camera.xpos-camera.xpos%8)/8)))
     #print((cursorSpot[1]-cursorSpot[1]%8)/8)
     if pygame.mouse.get_pressed(3) == (1,0,0):
         #place a block there
