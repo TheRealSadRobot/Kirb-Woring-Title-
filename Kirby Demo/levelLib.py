@@ -13,6 +13,8 @@ class Level:
         self.file =  json.load(open(f"LevelData\{self.__name}.json"))
         self.__graphicsData = Datafile["Terrain"]["SpriteCoordinates"]
         self.collisionData = self.file.get("Layout")
+        self.flipmap = self.file.get("FlipMap")
+        self.tileset = self.file.get("Tileset")
         self.maxiY = len(self.collisionData)
         self.maxiX = self.getMaxiX()
         for Object in self.file.get("Objects"):
@@ -45,7 +47,8 @@ class Level:
             colorSprite.blit(sprite, (0,0))
             sprite.blit(colorSprite, (0,0))
         return sprite
-
+    def getName(self):
+        return self.__name
     def getMaxiX(self):
         longest = 0
         for y in range(len(self.collisionData)):

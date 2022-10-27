@@ -63,16 +63,16 @@ def placeBlocks(level, camera):
     cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
     collisionCheck(cursorSpot,level,camera)
     #if square of level is clicked:
-    #print((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)
+    print(int((cursorSpot[0]-cursorSpot[0]%8+(camera.xpos-camera.xpos%8)/8)))
     #print((cursorSpot[1]-cursorSpot[1]%8)/8)
     if pygame.mouse.get_pressed(3) == (1,0,0):
         #place a block there
         row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
-        row[int((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)] = tiletype
-    elif pygame.mouse.get_pressed(3) == (0,1,0):
+        row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = tiletype
+    elif pygame.mouse.get_pressed(3) == (0,0,1):
         #place a block there
         row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
-        row[int((cursorSpot[0]-cursorSpot[0]%8-camera.xpos%8)/8)] = 0
+        row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = 0
         #if add row button is pressed:
             #add a row
         #if add column button is pressed:
@@ -85,6 +85,11 @@ def placeBlocks(level, camera):
             #place an object there
         #switch object stuff
         #edit object properties stuff
+    elif pygame.mouse.get_pressed(3) == (0,1,0):
+        writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
+        writeThis = {"Layout":level.collisionData,"Tileset":level.tileset,"FlipMap":level.flipmap,"Objects":level.file["Objects"],"BG":level.file["BG"],"Music":level.file["Music"]}
+        json.dump(writeThis,writeTo)
+        print("Your Game--Saved!")
 
 #collision Detection
 def collisionCheck(point,level, camera):
