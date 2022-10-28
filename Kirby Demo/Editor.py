@@ -5,7 +5,9 @@ import json
 import pygame
 import time
 import tkinter
+from tkinter import ttk
 from PIL import Image, ImageTk
+Datafile = json.load(open("Support.json"))
 
 #setup
 pygame.init()
@@ -15,6 +17,9 @@ winsizey = 240
 levelObjects = []
 itr = 0
 tiletype = 1
+themetype = 0
+storage = 0
+
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 pygame.display.set_caption("Kirby's Dream Level Editor")
 pygame.display.set_icon(pygame.image.load("EditorLogo.png"))
@@ -64,7 +69,19 @@ def main():
         mainCam.update()
         #draw the frame
         displayPane.blit(tileLayer, (0,0))
-        placeBlocks(level, mainCam)
+        global toolvar
+        global storage
+        if storage != toolvar.get():
+            popListbox()
+
+        if toolvar.get() == 0:
+            placeBlocks(level, mainCam)
+        elif toolvar.get() == 1:
+            flipBlocks(level,mainCam)
+        elif toolvar.get() == 2:
+            themeBlocks(level,mainCam)
+
+        storage = toolvar.get()
         window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
         tileLayer.fill((0,0,0))
         toolbar.update()
@@ -72,18 +89,91 @@ def main():
 def toolbarMake():
     #tkinter window for change block type and select tools
     global toolbar
+    global Tilebox
     toolbar = tkinter.Tk()
     toolbar.title("Tools")
     toolbar.wm_iconphoto(False, ImageTk.PhotoImage(Image.open("ToolboxIcon.png")))
     toolbar.geometry(f"{winsizex}x{winsizey}")
     #add a list of all block types
     Tilebox = tkinter.Listbox(toolbar)
-    #change block type if list entry is clicked
+    #radio buttons for tool selection
+    global BlockImg
+    global FlipImg
+    global ThemeImg
+    global toolvar
+    toolvar = tkinter.IntVar()
+    popListbox()
+    BlockImg = ImageTk.PhotoImage(Image.open("BlockBrushLogo.png"))
+    FlipImg = ImageTk.PhotoImage(Image.open("FlipBrushLogo.png"))
+    ThemeImg = ImageTk.PhotoImage(Image.open("ThemeBrushLogo.png"))
+    BlockBrush = ttk.Radiobutton(toolbar, text = "Block Brush", image = BlockImg, compound = "left", variable = toolvar, value = 0)
+    BlockBrush.pack()
+    FlipBrush = ttk.Radiobutton(toolbar, text = "Flip Brush", image = FlipImg, compound = "left", variable = toolvar, value = 1)
+    FlipBrush.pack()
+    ttk.Radiobutton(toolbar, text = "Theme Brush", image = ThemeImg, compound = "left", variable = toolvar, value = 2).pack()	
+    Tilebox.pack()
+    #add new row and column buttons
+	#maybe add option to add whole screens?
     #tool to flip tiles
     #tool to add objects
-    #toolbar.mainloop()
+
+def popListbox():
+    Tilebox.delete(0,tkinter.END)
+    global toolvar
+    if toolvar.get() == 0:
+        for item in range(len(Datafile["Tilekey"])-1):
+            Tilebox.insert(item, Datafile["Tilekey"][f"{item+1}"])
+    elif toolvar.get() == 2:
+        for item in range(len(Datafile["Themekey"])):
+            Tilebox.insert(item, Datafile["Themekey"][f"{item}"])
+
+#def themebrush
+def themeBlocks(level,camera):
+    try:
+    #change block type if list entry is clicked
+        themetype = Tilebox.curselection()[0]
+    except:
+        themetype = 0
+    rawLocale = pygame.mouse.get_pos()
+    cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
+    collisionCheck(cursorSpot,level,camera)
+    if pygame.mouse.get_pressed(3) == (1,0,0):
+        row = level.tileset[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+    #if the tile is not the max value on the Thememap:
+        #add one to it
+        #print(row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)])
+        if row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] < len(Datafile["Themekey"]):
+            row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
+    #else:
+        else:
+        #set it to 0
+            row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = 0
+
+#def flipbrush
+def flipBlocks(level,camera):
+    rawLocale = pygame.mouse.get_pos()
+    cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
+    collisionCheck(cursorSpot,level,camera)
+    #if pygame.mouse.get_pressed(3) == (1,0,0):
+    for e in pygame.event.get():
+        if e.type == pygame.MOUSEBUTTONUP or e.type == pygame.MOUSEBUTTONDOWN:
+            row =level.flipmap[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        #if the tile is not 3 on the flipmap:
+            #add one to it
+            if row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] <= 3:
+                row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] += 1
+        #else:
+            else:
+            #set it to 0
+                row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = 0
+
 #def placeblocks
 def placeBlocks(level, camera):
+    try:
+    #change block type if list entry is clicked
+        tiletype = Tilebox.curselection()[0]+1
+    except:
+        tiletype = 1
     rawLocale = pygame.mouse.get_pos()
     cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
     collisionCheck(cursorSpot,level,camera)
