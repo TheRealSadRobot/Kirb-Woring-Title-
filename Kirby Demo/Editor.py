@@ -7,6 +7,7 @@ import time
 import tkinter
 from tkinter import ttk
 from PIL import Image, ImageTk
+from functools import partial
 Datafile = json.load(open("Support.json"))
 
 #setup
@@ -39,9 +40,7 @@ Datafile = json.load(open("Support.json"))
 def main():
     level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
     mainCam = camLib.Camera(level,None)
-    toolbarMake()
-    #toolbarThread = threading.Thread(target = toolbarMake)
-    #toolbarThread.start()
+    toolbarMake(level)
     #while True
     while True:
         #put the stuff from the frame onto the window
@@ -86,32 +85,36 @@ def main():
         tileLayer.fill((0,0,0))
         toolbar.update()
         
-def toolbarMake():
+def toolbarMake(level):
     #tkinter window for change block type and select tools
     global toolbar
     global Tilebox
     toolbar = tkinter.Tk()
     toolbar.title("Tools")
     toolbar.wm_iconphoto(False, ImageTk.PhotoImage(Image.open("ToolboxIcon.png")))
-    toolbar.geometry(f"{winsizex}x{winsizey}")
+    #toolbar.geometry(f"{winsizex}x{winsizey}")
     #add a list of all block types
     Tilebox = tkinter.Listbox(toolbar)
     #radio buttons for tool selection
     global BlockImg
     global FlipImg
     global ThemeImg
+    global SaveImg
     global toolvar
     toolvar = tkinter.IntVar()
     popListbox()
     BlockImg = ImageTk.PhotoImage(Image.open("BlockBrushLogo.png"))
     FlipImg = ImageTk.PhotoImage(Image.open("FlipBrushLogo.png"))
     ThemeImg = ImageTk.PhotoImage(Image.open("ThemeBrushLogo.png"))
+    SaveImg = ImageTk.PhotoImage(Image.open("SaveIcon.png"))
     BlockBrush = ttk.Radiobutton(toolbar, text = "Block Brush", image = BlockImg, compound = "left", variable = toolvar, value = 0)
     BlockBrush.pack()
     FlipBrush = ttk.Radiobutton(toolbar, text = "Flip Brush", image = FlipImg, compound = "left", variable = toolvar, value = 1)
     FlipBrush.pack()
     ttk.Radiobutton(toolbar, text = "Theme Brush", image = ThemeImg, compound = "left", variable = toolvar, value = 2).pack()	
     Tilebox.pack()
+    SaveBtn = tkinter.Button(toolbar, text = "Save", image = SaveImg, compound = "left", padx = 10, pady = 5, command = partial(save, level))
+    SaveBtn.pack()
     #add new row and column buttons
 	#maybe add option to add whole screens?
     #tool to flip tiles
@@ -126,6 +129,12 @@ def popListbox():
     elif toolvar.get() == 2:
         for item in range(len(Datafile["Themekey"])):
             Tilebox.insert(item, Datafile["Themekey"][f"{item}"])
+
+def save(level):
+    writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
+    writeThis = {"Layout":level.collisionData,"Tileset":level.tileset,"FlipMap":level.flipmap,"Objects":level.file["Objects"],"BG":level.file["BG"],"Music":level.file["Music"]}
+    json.dump(writeThis,writeTo)
+    print("Your Game--Saved!")
 
 #def themebrush
 def themeBlocks(level,camera):
@@ -200,11 +209,6 @@ def placeBlocks(level, camera):
             #place an object there
         #switch object stuff
         #edit object properties stuff
-    elif pygame.mouse.get_pressed(3) == (0,1,0):
-        writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
-        writeThis = {"Layout":level.collisionData,"Tileset":level.tileset,"FlipMap":level.flipmap,"Objects":level.file["Objects"],"BG":level.file["BG"],"Music":level.file["Music"]}
-        json.dump(writeThis,writeTo)
-        print("Your Game--Saved!")
 
 #collision Detection
 def collisionCheck(point,level, camera):
