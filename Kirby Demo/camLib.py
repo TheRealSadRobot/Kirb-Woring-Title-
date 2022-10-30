@@ -20,6 +20,12 @@ class Camera:
                 if newPos > 0:
                     self.xpos = newPos
 
+    def refocus(self, location):
+        if location[0] > 124:
+            self.xpos = location[0]-124
+        else:
+            self.xpos = 0
+
     def movePos(self, xmove,ymove):
         self.__focusx += xmove
         if self.__focusx+256 > self.__currentLevel.maxiX*8:

@@ -13,6 +13,7 @@
                 "Inflate":[["Puff1", 5],["Puff2", 5],["Puff3", 5],["Puff4", 5]],
                 "Float":[["Float1",20],["Float2",20]],
                 "Flap":[["Float1",5],["Float2",10]],
+                "Death":[],
                 "Climb":[],
                 "Paint":[],
                 "Hurt":[],

@@ -142,23 +142,32 @@ class Object:
             return True
 
 class Player(Object):
+    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
+        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+        self.alive = True
+        self.respawnpoint = (xlocation,ylocation)
+
     def update(self,cam):
         Object.update(self,cam)
-        self.playerScript()
+        if(self.alive == True):
+            self.playerScript()
+        else:
+            self.deathfall(cam)
+            self.animate()
+            self.physicsSim()
 
     def playerScript(self):
         #run physics sim
         if self.grounded == False:
-            if self.speed[1] < self.fallSpeed:
-                self.speed[1] += 1
-            else:
-                self.speed[1] = self.fallSpeed
+            self.physicsSim()
         else:
             self.float = False
             self.speed[1] = 0
         #grounded and ungrounded
         #check for input
         keys = pygame.key.get_pressed()
+        if keys[pygame.K_d]:
+            self.Kill()
         if keys[pygame.K_LEFT]:
             self.dir = "left"
             #if not blocked on left side
@@ -282,6 +291,34 @@ class Player(Object):
             self.blockedRight = True
         else:
             self.blockedRight = False
+
+    def physicsSim(self):
+        if self.speed[1] < self.fallSpeed:
+            self.speed[1] += 1
+        else:
+            self.speed[1] = self.fallSpeed
+        
+
+    def Kill(self):
+        if self.alive == True:
+            print("Player Death")
+            self.alive = False
+            self.float = False
+            time.sleep(1)
+            self.speed[1] = -15
+
+    def deathfall(self, cam):
+        if self.location[1] > cam.ypos+256:
+             self.respawn(cam)
+        self.playAnimation("Roll")
+        self.speed[0] = 0
+
+    def respawn(self, cam):
+        self.alive = True
+        self.location[0] = self.respawnpoint[0]
+        self.location[1] = self.respawnpoint[1]
+        cam.refocus(self.location)
+
 class NPC(Object):
     pass
 #class Item(Object):
