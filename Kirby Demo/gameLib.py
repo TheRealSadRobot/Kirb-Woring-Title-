@@ -332,6 +332,7 @@ class Player(Object):
             print("Player Death")
             self.alive = False
             self.float = False
+            self.grounded = False
             time.sleep(1)
             self.speed[1] = -15
             self.fallSpeed = 7
