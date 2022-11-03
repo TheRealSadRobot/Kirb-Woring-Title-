@@ -13,6 +13,7 @@ class Object:
         self.speed = [0,0]
         self.location =[xlocation, ylocation]
         self.dir = "right"
+        self.pallateName = pallate
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
         self.fallSpeed = 7
         self.jumpHeight = 15
@@ -34,7 +35,21 @@ class Object:
         self.renderLayer = renderLayer
         #add to array of all objects
         (arrayDestination).append(self)
-        
+        self.objlist = arrayDestination
+
+    def collideWithObj(self):
+        for object in self.objlist:
+            if object != self:
+                #if top or bottom is between target body
+                if (self.location[1] >= object.location[1] and self.location[1] <= object.location[1]+object.spriteSize[1]) or (self.location[1]+self.spriteSize[1] >= object.location[1] and self.location[1]+self.spriteSize[1] <= object.location[1]+object.spriteSize[1]):
+                    #print(f"{self.charName} {self.pallateName}: Y-intersect")
+                    #if left or right is between target body
+                    if (self.location[0] >= object.location[0] and self.location[0] <= object.location[0]+object.spriteSize[0]) or (self.location[0]+self.spriteSize[0] >= object.location[0] and self.location[0]+self.spriteSize[0] <= object.location[0]+object.spriteSize[0]):
+                        #print(f"{self.charName} {self.pallateName}: X-intersect")
+                        #print("COLLISION")
+                        #return true
+                        return object
+
     def update(self, cam):
         self.move()
         self.animate()
@@ -47,6 +62,8 @@ class Object:
         self.sprite = pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
         #print(self.sprite.get_size())
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
+        if len(Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber]) > 2:
+             self.sprite.blit(pygame.transform.rotate(self.sprite,Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][2]),(0,0))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
         if self.dir == "right":
             self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
@@ -94,6 +111,7 @@ class Object:
             else:
                 self.animType = "Loop"
                 self.playAnimation(self.animBacklog)
+
     def moveTo(self):
         #move to the set location at the given speed
         pass
@@ -103,35 +121,42 @@ class Object:
         self.location[1] = int(self.location[1] + self.speed[1]/2)
     
     def collisionCheck(self, point):
+        #print(f"{self.charName} {self.pallateName} is testing collision")
         try:
             #check all four points on character.
             #find what tile type they are on
             tilecountx = (point[0]//8)
+            #print(f"{self.charName} {self.pallateName} has it's x test")
             tilecounty = (point[1]//8)
+            #print(f"{self.charName} {self.pallateName} has it's y test")
+            #print(tilecountx,tilecounty)
             tilenum = str(self.currentLevel.collisionData[tilecounty][tilecountx])
+            #print(f"{self.charName} {self.pallateName} has it's tile")
             tiletype = (Datafile["Tilekey"][tilenum])
+            #print(f"{self.charName} {self.pallateName} has it's tiletype")
             #print(tiletype)
             if tiletype != "Air":
                 if self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 1:
                     if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][8-point[0]%8][point[1]%8] == 1:
-                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        #print(f"{self.charName} {self.pallateName} is reigestering collision with an x-flipped block: type {tiletype}")
                         return True
                     else:
                         return False
                 elif self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 2:
                     if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][8-point[1]%8] == 1:
-                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        #print(f"{self.charName} {self.pallateName} is reigestering collision with a y-flipped block: type {tiletype}")
                         return True
                     else:
                         return False
                 elif self.currentLevel.file["FlipMap"][tilecounty][tilecountx] == 3:
                     if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][8-point[0]%8][8-point[1]%8] == 1:
-                        selfrenderLayer.set_at((point[0], point[1]), (0,255,0))
+                        #print(f"{self.charName} {self.pallateName} is reigestering collision with a dual-flipped block: type {tiletype}")
                         return True
                     else:
                         return False
                 else:
                     if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][point[1]%8] == 1:
+                        #print(f"{self.charName} {self.pallateName} is reigestering collision with a non-flipped block: type {tiletype}")
                         selfrenderLayer.fill((0,255,0), ((point[0],point[1]), (0,0)))
                         return True
                     else:
@@ -140,6 +165,7 @@ class Object:
                 return False
         except:
             return True
+            #print(f"{self.charName} {self.pallateName} is reigestering collision")
 
 class Player(Object):
     def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
@@ -157,6 +183,9 @@ class Player(Object):
             self.physicsSim()
 
     def playerScript(self):
+        collide = self.collideWithObj()
+        if isinstance(collide, Enemy):
+            self.Kill()
         #run physics sim
         if self.grounded == False:
             self.physicsSim()
@@ -297,7 +326,6 @@ class Player(Object):
             self.speed[1] += 1
         else:
             self.speed[1] = self.fallSpeed
-        
 
     def Kill(self):
         if self.alive == True:
@@ -306,11 +334,12 @@ class Player(Object):
             self.float = False
             time.sleep(1)
             self.speed[1] = -15
+            self.fallSpeed = 7
 
     def deathfall(self, cam):
         if self.location[1] > cam.ypos+256:
              self.respawn(cam)
-        self.playAnimation("Roll")
+        self.playAnimation("Death")
         self.speed[0] = 0
 
     def respawn(self, cam):
@@ -323,5 +352,42 @@ class NPC(Object):
     pass
 #class Item(Object):
 #class Block(Object):
-#class Enemy(Object):
+
+class Enemy(Object):
+
+    def update(self, cam):
+        #pygame.draw.rect(self.renderLayer, (0,255,0), (self.location[0]+self.spriteSize[0]/2, self.location[1]+self.spriteSize[1],1,1))
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))
+        #print(self.bottom)
+        if self.collisionCheck(self.bottom) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.bottom[0],self.bottom[1]-(itr)]) == True:
+                    itr+= 1
+                else:
+                    self.location[1] -= itr-1
+                    break
+                    self.grounded = True
+        elif self.collisionCheck((self.bottom[0], self.bottom[1]+1)) == True:
+            self.location[1] += 1
+            self.grounded = True
+        else:
+            self.grounded = False
+        if self.grounded == False:
+            self.physicsSim()
+            print("DEE NOT GROUNDED")
+        else:
+            self.speed[1] = 0
+       
+        Object.update(self,cam)
+
+    def Kill(self):
+        pass
+
+    def physicsSim(self):
+        if self.speed[1] < self.fallSpeed:
+            self.speed[1] += 1
+        else:
+            self.speed[1] = self.fallSpeed
+
 #class Trigger(Object):
