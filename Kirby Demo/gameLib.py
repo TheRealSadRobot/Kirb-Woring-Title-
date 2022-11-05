@@ -22,7 +22,6 @@ class Object:
         #current sprite
         self.animFrame = "Idle1"
         self.animFrameNumber = 0
-        self.mod = 0
         self.animation = "Idle"
         self.animType = "Loop"
         self.animBacklog = "Fall"
@@ -174,15 +173,16 @@ class Player(Object):
         self.respawnpoint = (xlocation,ylocation)
 
     def update(self,cam):
-        Object.update(self,cam)
         if(self.alive == True):
             self.playerScript()
         else:
             self.deathfall(cam)
             self.animate()
             self.physicsSim()
+        Object.update(self,cam)
 
     def playerScript(self):
+        self.collisionTest()
         collide = self.collideWithObj()
         if isinstance(collide, Enemy):
             self.Kill()
@@ -220,15 +220,12 @@ class Player(Object):
                 self.playAnimation("Idle")
             if keys[pygame.K_SPACE]:
                 if self.flap == False:
-                    if self.mod == 1:
-                        self.flap = True
-                    self.mod = 1
+                    self.flap = True
                     self.grounded = False
                     self.playAnimation("Jump")
                     self.speed[1] = -(self.jumpHeight)
             else:
                 self.flap = False
-                self.mod = 0
         #ungrounded only
         elif self.grounded == False:
             if self.speed[1] == 0:
@@ -265,6 +262,7 @@ class Player(Object):
         if self.blockedTop == True:
             self.speed[1] = 2
 
+    def collisionTest(self):
         #check for collisions
         self.bottom = [self.location[0]+8,self.location[1]+16]
         if self.collisionCheck(self.bottom) == True:
@@ -355,32 +353,26 @@ class NPC(Object):
 #class Block(Object):
 
 class Enemy(Object):
+    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
+        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+        self.behaviorItr = 0
+        self.behaviorTimer = 0
+        #there should be a list of programmed behaviors for each enemy, with each entry comprising a behavior and an accompanying variable
+        self.behaviors = (("Walk",60),("Wait", 45),("Flip","Null"),("Jump","Null"))
 
     def update(self, cam):
+        self.collisionTests()
+        self.behavior()
         #pygame.draw.rect(self.renderLayer, (0,255,0), (self.location[0]+self.spriteSize[0]/2, self.location[1]+self.spriteSize[1],1,1))
-        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))
-        #print(self.bottom)
-        if self.collisionCheck(self.bottom) == True:
-            itr = 1
-            while True:
-                if self.collisionCheck([self.bottom[0],self.bottom[1]-(itr)]) == True:
-                    itr+= 1
-                else:
-                    self.location[1] -= itr-1
-                    break
-                    self.grounded = True
-        elif self.collisionCheck((self.bottom[0], self.bottom[1]+1)) == True:
-            self.location[1] += 1
-            self.grounded = True
-        else:
-            self.grounded = False
+        if self.blockedTop == True:
+            self.speed[1] = 2
         if self.grounded == False:
             self.physicsSim()
-            print("DEE NOT GROUNDED")
+            #top blocked only
         else:
             self.speed[1] = 0
-       
         Object.update(self,cam)
+        #print(self.location)
 
     def Kill(self):
         pass
@@ -391,4 +383,113 @@ class Enemy(Object):
         else:
             self.speed[1] = self.fallSpeed
 
+    def walk(self):
+        self.playAnimation("Walk")
+        if self.dir == "right":
+            if self.blockedRight == False:
+                self.speed[0] = 1
+            else:
+                self.speed[0] = 0
+        elif self.dir == "left":
+            if self.blockedLeft == False:
+                self.speed[0] = -1
+            else:
+                self.speed[0] = 0
+        self.behaviorTimer += 1
+        if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
+            self.behaviorTimer = 0
+            self.behaviorItr += 1
+
+    def wait(self):
+        self.speed[0] = 0
+        self.playAnimation("Idle")
+        self.behaviorTimer += 1
+        if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
+            self.behaviorTimer = 0
+            self.behaviorItr += 1
+
+    def jump(self):
+        if self.grounded == True:
+            self.grounded = False
+            self.playAnimation("Jump")
+            self.speed[1] = -(self.jumpHeight)
+        self.behaviorTimer = 0
+        self.behaviorItr += 1
+
+    def flip(self):
+        if self.dir == "right":
+            self.dir = "left"
+        else:
+            self.dir = "right"
+        self.behaviorTimer = 0
+        self.behaviorItr += 1
+
+    def collisionTests(self):
+        self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
+        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]+self.spriteSize[1]/2))
+        self.left = (int(self.location[0]), int(self.location[1]+self.spriteSize[1]/2))
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))
+        #check bottom collision
+        if self.collisionCheck(self.bottom) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.bottom[0],self.bottom[1]-(itr)]) == True:
+                    itr+= 1
+                else:
+                    self.location[1] -= itr-1
+                    break
+            self.grounded = True
+        elif self.collisionCheck([self.bottom[0], self.bottom[1]+1]) == True:
+            self.location[1] += 1
+            self.grounded = True
+        else:
+            self.grounded = False
+        #check top collision
+        if self.collisionCheck(self.top) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.top[0],self.top[1]+(itr)]) == True:
+                    itr+= 1
+                else:
+                    self.location[1] += itr-1
+                    break
+            self.blockedTop = True
+        else:
+            self.blockedTop = False
+        #check left collision
+        if self.collisionCheck(self.left) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.left[0]+(itr),self.left[1]]) == True:
+                    itr+= 1
+                else:
+                    self.location[0] += itr-1
+                    break
+            self.blockedLeft = True
+        else:
+            self.blockedLeft = False
+        #check right collision
+        if self.collisionCheck(self.right) == True:
+            itr = 1
+            while True:
+                if self.collisionCheck([self.right[0]-(itr),self.right[1]]) == True:
+                    itr+= 1
+                else:
+                    self.location[0] -= itr-1
+                    break
+            self.blockedRight = True
+        else:
+            self.blockedRight = False
+
+    def behavior(self):
+        #get the current behavior
+        if self.behaviorItr >=len(self.behaviors):
+            self.behaviorItr = 0
+        getattr(self, self.behaviors[self.behaviorItr][0].lower())()
+        #if the behavior has a timer:
+                #if an iterator derived from the timer > 0:
+                        #increment the timer down
+                        #execute the action
+        #else if the behavior has a goal
+                #keep doing the thing until the goal is reached
 #class Trigger(Object):
