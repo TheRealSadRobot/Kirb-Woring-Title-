@@ -138,6 +138,7 @@ def save(level):
 
 #def themebrush
 def themeBlocks(level,camera):
+    global themetype
     try:
     #change block type if list entry is clicked
         themetype = Tilebox.curselection()[0]
@@ -191,8 +192,14 @@ def placeBlocks(level, camera):
     #print((cursorSpot[1]-cursorSpot[1]%8)/8)
     if pygame.mouse.get_pressed(3) == (1,0,0):
         #place a block there
-        row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row = level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
         row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = tiletype
+        global themetype
+        print(themetype)
+        try:
+            level.tileset[int((cursorSpot[1]-cursorSpot[1]%8)/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
+        except:
+            pass
     elif pygame.mouse.get_pressed(3) == (0,0,1):
         #place a block there
         row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]

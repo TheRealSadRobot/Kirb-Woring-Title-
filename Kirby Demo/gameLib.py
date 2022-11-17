@@ -31,6 +31,7 @@ class Object:
         self.blockedTop = False
         self.float = False
         self.flap = False
+        self.crouching = False
         self.renderLayer = renderLayer
         #add to array of all objects
         (arrayDestination).append(self)
@@ -50,7 +51,17 @@ class Object:
                         return object
 
     def update(self, cam):
+        """self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
+        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]+self.spriteSize[1]/2))
+        self.left = (int(self.location[0]), int(self.location[1]+self.spriteSize[1]/2))
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))"""
+        self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]-self.spriteSize[1]))
+        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]-self.spriteSize[1]/2)-1)
+        self.left = (int(self.location[0]), int(self.location[1]-self.spriteSize[1]/2)-1)
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
+        
         self.move()
+        self.camera = cam
         self.animate()
         #if clicked
         #render sprite at location
@@ -65,9 +76,15 @@ class Object:
              self.sprite.blit(pygame.transform.rotate(self.sprite,Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][2]),(0,0))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
         if self.dir == "right":
-            self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
+            self.renderLayer.blit(self.sprite, (self.location[0]-cam.xpos,self.location[1]-cam.ypos-self.spriteSize[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
         else:
-            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]-cam.xpos,self.location[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
+            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]-cam.xpos,self.location[1]-cam.ypos-self.spriteSize[1]), (0,0,self.spriteSize[0],self.spriteSize[1]))
+        pygame.draw.rect(self.renderLayer,(255,0,0),(self.top[0]-cam.xpos,self.top[1]-cam.ypos,1,1))
+        pygame.draw.rect(self.renderLayer,(255,255,0),(self.bottom[0]-cam.xpos,self.bottom[1]-cam.ypos,1,1))
+        pygame.draw.rect(self.renderLayer,(0,0,255),(self.left[0]-cam.xpos,self.left[1]-cam.ypos,1,1))
+        pygame.draw.rect(self.renderLayer,(0,255,0),(self.right[0]-cam.xpos,self.right[1]-cam.ypos,1,1))
+        #if isinstance(self, Player):
+            #print(self.blockedTop, self.grounded,self.speed[1])
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -156,7 +173,7 @@ class Object:
                 else:
                     if Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8][point[1]%8] == 1:
                         #print(f"{self.charName} {self.pallateName} is reigestering collision with a non-flipped block: type {tiletype}")
-                        selfrenderLayer.fill((0,255,0), ((point[0],point[1]), (0,0)))
+                        self.renderLayer.fill((0,255,0), ((point[0],point[1]), (0,0)))
                         return True
                     else:
                         return False
@@ -165,27 +182,108 @@ class Object:
         except:
             return True
             #print(f"{self.charName} {self.pallateName} is reigestering collision")
+        
+    def walk(self):
+        self.playAnimation("Walk")
+        if self.dir == "right":
+            if self.blockedRight == False:
+                self.speed[0] = 1
+            else:
+                self.speed[0] = 0
+        elif self.dir == "left":
+            if self.blockedLeft == False:
+                self.speed[0] = -1
+            else:
+                self.speed[0] = 0
+        self.behaviorTimer += 1
+        try:
+            if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
+                self.behaviorTimer = 0
+                self.behaviorItr += 1
+        except:
+            pass
+
+
+    def crouch(self):
+        self.speed[0] = 0
+        self.playAnimation("Crouch")
+        self.crouching = True
+        try:
+            self.behaviorTimer += 1
+            if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
+                self.behaviorTimer = 0
+                self.behaviorItr += 1
+        except:
+            pass
+        
+    def wait(self):
+        self.speed[0] = 0
+        self.playAnimation("Idle")
+        self.crouching = False
+        try:
+            self.behaviorTimer += 1
+            if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
+                self.behaviorTimer = 0
+                self.behaviorItr += 1
+        except:
+            pass
+
+    def jump(self):
+        if self.grounded == True:
+            self.location[1] -= 5
+            self.grounded = False
+            self.playAnimation("Jump")
+            self.speed[1] = -(self.jumpHeight)
+        try:
+            self.behaviorTimer = 0
+            self.behaviorItr += 1
+        except:
+            pass
+
+    def flip(self):
+        if self.dir == "right":
+            self.dir = "left"
+        else:
+            self.dir = "right"
+        try:
+            self.behaviorTimer = 0
+            self.behaviorItr += 1
+        except:
+            pass
 
 class Player(Object):
     def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
         Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
         self.alive = True
+        self.mouthfull = False
+        self.inhale = False
         self.respawnpoint = (xlocation,ylocation)
 
     def update(self,cam):
+        Object.update(self,cam)
         if(self.alive == True):
             self.playerScript()
         else:
             self.deathfall(cam)
             self.animate()
             self.physicsSim()
-        Object.update(self,cam)
 
     def playerScript(self):
         self.collisionTest()
         collide = self.collideWithObj()
+        #code for death and inhale
         if isinstance(collide, Enemy):
-            self.Kill()
+            if self.inhale == True:
+                if self.dir == "right" and collide.location[0]+collide.spriteSize[0]/2 > self.right[0]:
+                    self.mouthfull = True
+                    collide.Kill()
+                elif self.dir == "left" and collide.location[0]+collide.spriteSize[0]/2 < self.left[0]:
+                    self.mouthfull = True
+                    collide.Kill()
+                else:
+                    self.Kill()
+            else:
+                self.Kill()
         #run physics sim
         if self.grounded == False:
             self.physicsSim()
@@ -193,16 +291,53 @@ class Player(Object):
             self.float = False
             self.speed[1] = 0
         #grounded and ungrounded
+        if self.inhale == True:
+            for object in self.objlist:
+                if object != self:
+                    if self.dir == "right" and (object.location[0]-self.right[0]) <= 40 and (object.location[0]-self.right[0]) > 0:
+                        if (self.top[1]-object.location[1]) <= 16 and (self.bottom[1]-object.location[1]) > -16:
+                            #print(f"RIGHT: Suck in {object.pallateName}")
+                            object.location[0] -= 1
+                            if object.location[1] > self.right[1]:
+                                object.location[1] -= 1
+                            elif object.location[1] < self.right[1]:
+                                object.location[1] += 1
+                    elif self.dir == "left" and (self.left[0]-object.location[0]) <= 40 and (self.left[0]-object.location[0]) > 0:
+                        if (self.top[1]-object.location[1]) <= 16 and (self.bottom[1]-object.location[1]) > -16:
+                            #print(f"LEFT: Suck in {object.pallateName}")
+                            object.location[0] += 1
+                            if object.location[1] > self.left[1]:
+                                object.location[1] -= 1
+                            elif object.location[1] < self.left[1]:
+                                object.location[1] += 1
         #check for input
         keys = pygame.key.get_pressed()
         if keys[pygame.K_d]:
             self.Kill()
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_i]:
+            if self.startInhale ==False:
+                if self.mouthfull == False:
+                    self.float = False
+                    if self.inhale== False:
+                        self.playAnimationOnce("InhaleStart","Inhale")
+                    else:
+                        self.playAnimation("Inhale")
+                    self.inhale = True
+                else:
+                    self.playAnimation("Full")
+                    if self.inhale == False:
+                        self.mouthfull = False
+                        self.startInhale = True
+        else:
+            self.inhale = False
+            self.startInhale = False
+                    
+        if keys[pygame.K_LEFT] and self.inhale == False:
             self.dir = "left"
             #if not blocked on left side
             if self.blockedLeft == False:
                 self.speed[0] = -1
-        elif keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT] and self.inhale == False:
             self.dir = "right"
             if self.blockedRight == False:
                 self.speed[0] = 1
@@ -213,17 +348,37 @@ class Player(Object):
         #print(self.flap)
         #print(self.animation)
         if self.grounded == True:
+            if keys[pygame.K_DOWN]:
+                if self.mouthfull == False:
+                    self.crouch()
+            else:
+                self.crouching = False
             self.float = False
             if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
-                self.playAnimation("Walk")
+                if self.inhale == False:
+                    if self.mouthfull == False:
+                        self.playAnimation("Walk")
+                    else:
+                        self.playAnimation("FullWalk")
             else:
-                self.playAnimation("Idle")
+                if self.inhale == False:
+                    if self.mouthfull == False:
+                        if self.crouching == False:
+                            self.playAnimation("Idle")
+                        else:
+                            self.playAnimation("Crouch")
+                    else:
+                        self.playAnimation("Full")
             if keys[pygame.K_SPACE]:
-                if self.flap == False:
+                if self.flap == False and self.inhale == False:
                     self.flap = True
-                    self.grounded = False
-                    self.playAnimation("Jump")
-                    self.speed[1] = -(self.jumpHeight)
+                    """self.grounded = False
+                    if self.mouthfull == False:
+                        self.playAnimation("Jump")
+                    else:
+                        self.playAnimation("FullJump")
+                    self.speed[1] = -(self.jumpHeight)"""
+                    self.jump()
             else:
                 self.flap = False
         #ungrounded only
@@ -231,18 +386,35 @@ class Player(Object):
             if self.speed[1] == 0:
                 if self.animation == "Fall":
                     pass
+                elif self.inhale== True:
+                    self.playAnimation("Inhale")
                 else:
-                    self.playAnimationOnce("Roll","Fall")
+                    if self.mouthfull == False:
+                        self.playAnimationOnce("Roll","Fall")
+                    else:
+                        self.playAnimation("FullJump")
             if self.speed[1] > 0:
                 if self.float == False:
-                    self.playAnimation("Fall")
+                    if self.mouthfull == False:
+                        self.playAnimation("Fall")
+                        if self.inhale== True:
+                            self.playAnimation("Inhale")
+                    else:
+                        self.playAnimation("FullJump")
+                elif self.inhale== True:
+                    self.playAnimation("Inhale")
                 else:
                     self.playAnimation("Float")
             else:
                 if self.float == False:
-                    self.playAnimation("Jump")
+                    if self.mouthfull == False:
+                        self.playAnimation("Jump")
+                    elif self.inhale== True:
+                        self.playAnimation("Inhale")
+                    else:
+                        self.playAnimation("FullJump")
             if keys[pygame.K_SPACE]:
-                if self.flap == False:
+                if self.flap == False and self.mouthfull == False:
                     self.flap = True
                     if self.float == False:
                         self.float = True
@@ -253,7 +425,7 @@ class Player(Object):
             else:
                 self.flap = False
                 
-            if self.float == True:
+            if self.float == True or self.inhale == True:
                 self.fallSpeed = 2
             else:
                 self.fallSpeed = 7
@@ -264,9 +436,8 @@ class Player(Object):
 
     def collisionTest(self):
         #check for collisions
-        self.bottom = [self.location[0]+8,self.location[1]+16]
         if self.collisionCheck(self.bottom) == True:
-            itr = 1
+            itr = 0
             while True:
                 if self.collisionCheck([self.bottom[0],self.bottom[1]-(itr)]) == True:
                     itr+= 1
@@ -280,7 +451,6 @@ class Player(Object):
         else:
             self.grounded = False
 
-        self.top = [self.location[0]+8,self.location[1]]
         if self.collisionCheck(self.top) == True:
             itr = 1
             while True:
@@ -293,7 +463,6 @@ class Player(Object):
         else:
             self.blockedTop = False
             
-        self.left = [self.location[0],self.location[1]+7]
         if self.collisionCheck(self.left) == True:
             itr = 1
             while True:
@@ -306,7 +475,6 @@ class Player(Object):
         else:
             self.blockedLeft = False
             
-        self.right = [self.location[0]+16,self.location[1]+7]
         if self.collisionCheck(self.right) == True:
             itr = 1
             while True:
@@ -330,14 +498,17 @@ class Player(Object):
             print("Player Death")
             self.alive = False
             self.float = False
+            self.mouthfull = False
+            self.inhale = False
             self.grounded = False
             time.sleep(1)
             self.speed[1] = -15
             self.fallSpeed = 7
 
     def deathfall(self, cam):
+        self.fallSpeed = 7
         if self.location[1] > cam.ypos+256:
-             self.respawn(cam)
+            self.respawn(cam)
         self.playAnimation("Death")
         self.speed[0] = 0
 
@@ -375,7 +546,8 @@ class Enemy(Object):
         #print(self.location)
 
     def Kill(self):
-        pass
+        self.location[0] = 256
+        self.location[1] = 36
 
     def physicsSim(self):
         if self.speed[1] < self.fallSpeed:
@@ -383,52 +555,15 @@ class Enemy(Object):
         else:
             self.speed[1] = self.fallSpeed
 
-    def walk(self):
-        self.playAnimation("Walk")
-        if self.dir == "right":
-            if self.blockedRight == False:
-                self.speed[0] = 1
-            else:
-                self.speed[0] = 0
-        elif self.dir == "left":
-            if self.blockedLeft == False:
-                self.speed[0] = -1
-            else:
-                self.speed[0] = 0
-        self.behaviorTimer += 1
-        if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
-            self.behaviorTimer = 0
-            self.behaviorItr += 1
-
-    def wait(self):
-        self.speed[0] = 0
-        self.playAnimation("Idle")
-        self.behaviorTimer += 1
-        if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
-            self.behaviorTimer = 0
-            self.behaviorItr += 1
-
-    def jump(self):
-        if self.grounded == True:
-            self.grounded = False
-            self.playAnimation("Jump")
-            self.speed[1] = -(self.jumpHeight)
-        self.behaviorTimer = 0
-        self.behaviorItr += 1
-
-    def flip(self):
-        if self.dir == "right":
-            self.dir = "left"
-        else:
-            self.dir = "right"
-        self.behaviorTimer = 0
-        self.behaviorItr += 1
-
     def collisionTests(self):
-        self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
+        """self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
         self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]+self.spriteSize[1]/2))
         self.left = (int(self.location[0]), int(self.location[1]+self.spriteSize[1]/2))
-        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))"""
+        self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]-self.spriteSize[1]))
+        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]-self.spriteSize[1]/2))
+        self.left = (int(self.location[0]), int(self.location[1]-self.spriteSize[1]/2))
+        self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
         #check bottom collision
         if self.collisionCheck(self.bottom) == True:
             itr = 1
