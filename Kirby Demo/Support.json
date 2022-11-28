@@ -6,7 +6,11 @@
             "Kirby":
             {
                 "Idle":[["Idle1", 55],["Idle2",5]],
+                "Stand45":[["Stand45",60]],
+                "Stand135":[["Stand135",60]],
                 "Crouch":[["Crouch", 5]],
+                "Crouch45":[["Crouch45", 5]],
+                "Crouch135":[["Crouch45", 5,0,1]],
                 "Walk":[["Walk1", 15],["Walk2", 10],["Walk3", 15],["Walk2", 10]],
                 "Roll":[["Roll1", 4],["Roll2", 3],["Roll3", 3],["Roll4", 4]],
                 "Fall":[["Roll4", 10]],
@@ -19,7 +23,7 @@
                 "FullJump":[["FullWalk1", 7]],
                 "Spit":[],
                 "AirSpit":[],
-                "Swallow":[["FullSpit1",5],["Swallow",5],["Crouch", 5]],
+                "Swallow":[["FullSpit1",5],["Swallow",1],["Crouch", 2]],
                 "Float":[["Float1",20],["Float2",20]],
                 "Flap":[["Float1",5],["Float2",10]],
                 "Death":[["Death",5],["Death",10,270],["Death",5,180],["Death",10,90]],
@@ -56,7 +60,10 @@
             {
                 "Idle1":[0,32],
                 "Idle2":[16,32],
+                "Stand45":[459,32],
+                "Stand135":[506,32],
                 "Crouch":[427,32],
+                "Crouch45":[522,32],
                 "Swallow":[443,32],
                 "Walk1":[32,32],
                 "Walk2":[48,32],
@@ -136,7 +143,10 @@
             {
                 "Idle1":[16,16],
                 "Idle2":[16,16],
+                "Stand45":[16,19],
+                "Stand135":[16,19],
                 "Crouch":[16,9],
+                "Crouch45":[16 ,16],
                 "Swallow":[16,14],
                 "Walk1":[16,16],
                 "Walk2":[16,16],
@@ -207,6 +217,15 @@
                 "Ladder1":[],
                 "Ladder2":[],
                 "Interact":[]
+            },
+            "Overrides":
+            {
+                "Kirby":
+                {
+                    "Stand45":[16,16],
+                    "Stand135":[16,16],
+                    "Crouch45":[16,9]
+                }
             }
             
         },

@@ -67,7 +67,7 @@ mainCam = camLib.Camera(MainRoom,Player)
 #loop
 while True:
     MainRoom.loadLevel(TileLayer, mainCam)
-    #time.sleep(0.10)
+    #time.sleep(0.05)
     fpstimer.tick(60)
     #update gameobjects
     for item in Objects:

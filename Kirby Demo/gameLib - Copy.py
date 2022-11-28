@@ -10,7 +10,6 @@ class Object:
     def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
         self.charName = charName
         #behavior type
-        self.alive = True
         self.speed = [0,0]
         self.location =[xlocation, ylocation]
         self.dir = "right"
@@ -98,8 +97,8 @@ class Object:
         pygame.draw.rect(self.renderLayer,(255,255,0),(self.bottom[0]-cam.xpos,self.bottom[1]-cam.ypos,1,1))
         pygame.draw.rect(self.renderLayer,(0,0,255),(self.left[0]-cam.xpos,self.left[1]-cam.ypos,1,1))
         pygame.draw.rect(self.renderLayer,(0,255,0),(self.right[0]-cam.xpos,self.right[1]-cam.ypos,1,1))
-        #if isinstance(self, Player):
-            #print(self.speed[0],self.speed[1])
+        if isinstance(self, Player):
+            print(self.speed[0],self.speed[1])
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -146,65 +145,10 @@ class Object:
     def moveTo(self):
         #move to the set location at the given speed
         pass
-
-    def distanceToCollide(self,point,searchAxis,searchDirection):
-        itr = 0
-        if searchAxis == 0:
-            while True:
-                if isinstance(self, Player):
-                    pygame.draw.rect(self.renderLayer,(255,0,0),(self.top[0]+itr-self.camera.xpos,self.top[1]-self.camera.ypos,1,1))
-                    pygame.draw.rect(self.renderLayer,(255,255,0),(self.bottom[0]+itr-self.camera.xpos,self.bottom[1]-self.camera.ypos,1,1))
-                    pygame.draw.rect(self.renderLayer,(0,0,255),(self.left[0]+itr-self.camera.xpos,self.left[1]-self.camera.ypos,1,1))
-                    pygame.draw.rect(self.renderLayer,(0,255,0),(self.right[0]+itr-self.camera.xpos,self.right[1]-self.camera.ypos,1,1))
-                if self.collisionCheck((point[searchAxis]+itr,point[1])):   
-                    break
-                itr += 1*searchDirection
-        else:
-            while True:
-                if isinstance(self, Player):
-                    pygame.draw.rect(self.renderLayer,(255,0,0),(self.top[0]-self.camera.xpos,self.top[1]-self.camera.ypos+itr,1,1))
-                    pygame.draw.rect(self.renderLayer,(255,255,0),(self.bottom[0]-self.camera.xpos,self.bottom[1]-self.camera.ypos+itr,1,1))
-                    pygame.draw.rect(self.renderLayer,(0,0,255),(self.left[0]-self.camera.xpos,self.left[1]-self.camera.ypos+itr,1,1))
-                    pygame.draw.rect(self.renderLayer,(0,255,0),(self.right[0]-self.camera.xpos,self.right[1]-self.camera.ypos+itr,1,1))
-                if self.collisionCheck((point[0],point[searchAxis]+itr)):   
-                    break
-                itr += 1*searchDirection
-        return itr
     
     def move(self):
-        if self.alive == True:
-            #if isinstance(self, Player):
-                #print(self.speed[0])
-            if self.collisionCheck((self.right[0]+self.speed[0],self.right[1]+int(self.speed[1]/2))) == True:
-                if self.collisionCheck((self.right[0]+self.speed[0],self.right[1])) == False:
-                    self.location[0] += self.speed[0]
-                else:
-                    self.location[0] += self.distanceToCollide(self.right, 0, 1)
-                    
-            elif self.collisionCheck((self.left[0]+self.speed[0],self.left[1]+int(self.speed[1]/2))) == True:
-                if self.collisionCheck((self.left[0]+self.speed[0],self.left[1])) == False:
-                    self.location[0] += self.speed[0]
-                else:
-                    self.location[0] += self.distanceToCollide(self.left, 0, -1)
-            else:
-                self.location[0] += self.speed[0]
-            self.getpoints()
-            if self.collisionCheck((self.top[0]+self.speed[0],self.top[1]+int(self.speed[1]/2))) == True:
-                if self.collisionCheck((self.top[0],self.top[1]+int(self.speed[1]/2))) == False:
-                    self.location[1] += int(self.speed[1]/2)
-                else:
-                    self.location[1] += self.distanceToCollide(self.top, 1, -1)
-            elif self.collisionCheck((self.bottom[0]+self.speed[0],self.bottom[1]+int(self.speed[1]/2))) == True:
-                if self.collisionCheck((self.bottom[0],self.bottom[1]+int(self.speed[1]/2))) == False:
-                    self.location[1] += int(self.speed[1]/2)
-                else:
-                    self.location[1] += self.distanceToCollide(self.bottom, 1, 1)
-            else:
-                self.location[1] += int(self.speed[1]/2)
-            self.getpoints()
-        else:
-            self.location[0] += self.speed[0]
-            self.location[1] += int(self.speed[1]/2)
+        self.location[0] += self.speed[0]
+        self.location[1] += int(self.speed[1]/2)
     
     def collisionCheck(self, point):
         #print(f"{self.charName} {self.pallateName} is testing collision")
