@@ -21,6 +21,36 @@ tiletype = 1
 themetype = 0
 storage = 0
 
+fullscreen = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+              
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 pygame.display.set_caption("Kirby's Dream Level Editor")
 pygame.display.set_icon(pygame.image.load("EditorLogo.png"))
@@ -50,6 +80,10 @@ def main():
             mainCam.movePos(-2,0)
         if keys[pygame.K_RIGHT]:
             mainCam.movePos(2,0)
+        if keys[pygame.K_UP]:
+            mainCam.movePos(0,-2)
+        if keys[pygame.K_DOWN]:
+            mainCam.movePos(0,2)
         #if mode is place blocks:
             #placeblocks
         #else if mode is place objects
@@ -113,6 +147,14 @@ def toolbarMake(level):
     FlipBrush.pack()
     ttk.Radiobutton(toolbar, text = "Theme Brush", image = ThemeImg, compound = "left", variable = toolvar, value = 2).pack()	
     Tilebox.pack()
+    RoomBelowBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddDown, level))
+    RoomBelowBtn.pack()
+    """RoomAboveBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddUp, level))
+    RoomAboveBtn.pack()
+    RoomLeftBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddLeft, level))
+    RoomLeftBtn.pack()
+    RoomRightBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddRight, level))
+    RoomRightBtn.pack()"""
     SaveBtn = tkinter.Button(toolbar, text = "Save", image = SaveImg, compound = "left", padx = 10, pady = 5, command = partial(save, level))
     SaveBtn.pack()
     #add new row and column buttons
@@ -136,6 +178,13 @@ def save(level):
     json.dump(writeThis,writeTo)
     print("Your Game--Saved!")
 
+def screenAddDown(level):
+    global fullscreen
+    for item in fullscreen:
+        level.tileset.append(item)
+        level.collisionData.append(item)
+        level.flipmap.append(item)
+
 #def themebrush
 def themeBlocks(level,camera):
     global themetype
@@ -148,7 +197,7 @@ def themeBlocks(level,camera):
     cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
     collisionCheck(cursorSpot,level,camera)
     if pygame.mouse.get_pressed(3) == (1,0,0):
-        row = level.tileset[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row = level.tileset[int(((cursorSpot[1]-cursorSpot[1]%8)+(camera.ypos-camera.ypos%8))/8)]
     #if the tile is not the max value on the Thememap:
         #add one to it
         #print(row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)])
@@ -167,7 +216,7 @@ def flipBlocks(level,camera):
     #if pygame.mouse.get_pressed(3) == (1,0,0):
     for e in pygame.event.get():
         if e.type == pygame.MOUSEBUTTONUP or e.type == pygame.MOUSEBUTTONDOWN:
-            row =level.flipmap[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+            row = level.flipmap[int(((cursorSpot[1]-cursorSpot[1]%8)+(camera.ypos-camera.ypos%8))/8)]
         #if the tile is not 3 on the flipmap:
             #add one to it
             if row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] <= 3:
@@ -192,7 +241,7 @@ def placeBlocks(level, camera):
     #print((cursorSpot[1]-cursorSpot[1]%8)/8)
     if pygame.mouse.get_pressed(3) == (1,0,0):
         #place a block there
-        row = level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row = level.collisionData[int(((cursorSpot[1]-cursorSpot[1]%8)+(camera.ypos-camera.ypos%8))/8)]
         row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = tiletype
         global themetype
         print(themetype)
@@ -202,7 +251,7 @@ def placeBlocks(level, camera):
             pass
     elif pygame.mouse.get_pressed(3) == (0,0,1):
         #place a block there
-        row =level.collisionData[int((cursorSpot[1]-cursorSpot[1]%8)/8)]
+        row = level.collisionData[int(((cursorSpot[1]-cursorSpot[1]%8)+(camera.ypos-camera.ypos%8))/8)]
         row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = 0
         #if add row button is pressed:
             #add a row

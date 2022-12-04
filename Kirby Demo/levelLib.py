@@ -29,13 +29,13 @@ class Level:
                 tile = pygame.Surface((8,8))
                 tile.blit(Sheet, (0,0), (graphics[0],graphics[1],8,8))
                 if self.file["FlipMap"][y][x] == 1:
-                    Receptacle.blit(pygame.transform.flip(tile,1,0), ((x*8)-camera.xpos,(y*8)))
+                    Receptacle.blit(pygame.transform.flip(tile,1,0), ((x*8)-camera.xpos,(y*8)-camera.ypos))
                 elif self.file["FlipMap"][y][x] == 2:
-                    Receptacle.blit(pygame.transform.flip(tile,0,1), ((x*8)-camera.xpos,(y*8)))
+                    Receptacle.blit(pygame.transform.flip(tile,0,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
                 elif self.file["FlipMap"][y][x] == 3:
-                    Receptacle.blit(pygame.transform.flip(tile,1,1), ((x*8)-camera.xpos,(y*8)))
+                    Receptacle.blit(pygame.transform.flip(tile,1,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
                 else:
-                    Receptacle.blit(Sheet, ((x*8)-camera.xpos,(y*8)),(graphics[0],graphics[1],8,8))
+                    Receptacle.blit(Sheet, ((x*8)-camera.xpos,(y*8)-camera.ypos),(graphics[0],graphics[1],8,8))
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:

@@ -1,6 +1,7 @@
 import json
 import pygame
 import time
+import math
 #spritesheet
 Sheet = pygame.image.load("Kirbo Sprites.png")
 #metadata for spritesheet
@@ -41,6 +42,9 @@ class Object:
         (arrayDestination).append(self)
         self.objlist = arrayDestination
 
+    def delete(self):
+        self.objlist.remove(self)
+
     def collideWithObj(self):
         for object in self.objlist:
             if object != self:
@@ -53,6 +57,7 @@ class Object:
                         #print("COLLISION")
                         #return true
                         return object
+                        
 
     def getpoints(self):
         """self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
@@ -60,8 +65,8 @@ class Object:
         self.left = (int(self.location[0]), int(self.location[1]+self.spriteSize[1]/2))
         self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]+self.spriteSize[1]))"""
         self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]-self.spriteSize[1]))
-        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]-self.spriteSize[1]/2))
-        self.left = (int(self.location[0]), int(self.location[1]-self.spriteSize[1]/2))
+        self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]-self.spriteSize[1]/2)-1)
+        self.left = (int(self.location[0]), int(self.location[1]-self.spriteSize[1]/2)-1)
         self.bottom = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
 
     def update(self, cam):
@@ -797,4 +802,41 @@ class Enemy(Object):
                     #keep doing the thing until the goal is reached
         else:
             self.playAnimationOnce("Roll","Fall")
+
+class Attack(Object):
+    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,lifespan,alligience):
+        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+        self.lifespan = lifespan
+        self.alligience = alligience
+        #self.persistant = persistant
+        self.angle = 0
+    def update(self,mainCam):
+        Object.update(self,mainCam)
+        if self.lifespan > 0:
+            self.circleMove(30,80,(150,100))
+            self.lifespan -= 1
+            self.hitCheck()
+        else:
+            self.delete()
+    def arcMove(self,startPoint,apexPoint,endPoint):
+        pass
+    def circleMove(self,radiusx,radiusy,center):
+        #print(self.speed)
+        rotSpeed = 0.1
+        if self.angle < 360:
+            self.angle += rotSpeed
+        else:
+            self.angle = 0
+        self.location[0] = center[0] + (math.cos(self.angle))*radiusx
+        self.location[1] = center[1] + (math.sin(self.angle))*radiusy
+            
+    def lineMove(self):
+        pass
+    def hitCheck(self):
+        hitObj = self.collideWithObj()
+        if hitObj != None and type(hitObj) != type(self.alligience):
+            hitObj.Kill()
+            print("Dip")
+    def moveTo(self,x,y):
+        self.location = (x,y)
 #class Trigger(Object):
