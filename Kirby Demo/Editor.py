@@ -246,7 +246,8 @@ def placeBlocks(level, camera):
         global themetype
         print(themetype)
         try:
-            level.tileset[int((cursorSpot[1]-cursorSpot[1]%8)/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
+            #level.flipMap[int((cursorSpot[1]-cursorSpot[1]%8+(camera.ypos-camera.ypos%8))/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
+            level.tileset[int((cursorSpot[1]-cursorSpot[1]%8+(camera.ypos-camera.ypos%8))/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
         except:
             pass
     elif pygame.mouse.get_pressed(3) == (0,0,1):
@@ -272,15 +273,15 @@ def collisionCheck(point,level, camera):
     #check all four points on character.
     #find what tile type they are on
     tilecountx = ((point[0]+camera.xpos)//8)
-    tilecounty = (point[1]//8)
+    tilecounty = ((point[1]-camera.ypos%8)//8)
     tilenum = str(level.collisionData[tilecounty][tilecountx])
     tiletype = (Datafile["Tilekey"][tilenum])
     #print(tiletype)
     if itr < 30:
-        pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8,8,8),1)
+        pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
         itr += 1
     elif itr > 0:
-        pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8,8,8),1)
+        pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
         itr -= 1
     """if tiletype != "Air":
             if level.file["FlipMap"][tilecounty][tilecountx] != 0:
