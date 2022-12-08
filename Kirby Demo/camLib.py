@@ -7,6 +7,7 @@ class Camera:
         self.__focusx = 0
         self.__focusy = 0
         self.__burner = False
+        self.lockMove = False
         if focus == None:
             self.mode = "Control"
         else:
@@ -14,7 +15,7 @@ class Camera:
             self.__focus = focus
 
     def update(self):
-        if self.mode == "Follow":
+        if self.mode == "Follow" and self.lockMove == False:
             try:
                 self.__burner = self.__currentLevel.collisionData[int((self.ypos-self.ypos%8+120)/8)][int((self.xpos-self.xpos%8+256)/8)]
                 self.__focusx = self.__focus.location[0]

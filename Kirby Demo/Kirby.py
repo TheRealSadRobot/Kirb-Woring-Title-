@@ -20,7 +20,6 @@ xval = 0
 yval = 0
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 fpstimer = pygame.time.Clock()
-
 #title screen:
     #play music
     #load everything
@@ -62,8 +61,8 @@ charLayer.set_colorkey((0,0,0))
 displayPane = pygame.Surface((winsizex,winsizey))
 
 MainRoom = levelLib.Level("Castle", "TestRoom1",Objects,charLayer)
-Player = gameLib.Player("Kirby",56,100,Objects,charLayer, "Normal",MainRoom)
-Test = gameLib.Attack("Kirby",150,100,Objects,charLayer, "Dee",MainRoom,500,Player)
+Player = gameLib.Player("Kirby","Copy",56,100,Objects,charLayer, "Normal",MainRoom)
+Test = gameLib.Attack("Kirby","None",150,100,Objects,charLayer,"Dee",MainRoom,500,Player,"circle")
 mainCam = camLib.Camera(MainRoom,Player)
 #loop
 while True:

@@ -2,17 +2,21 @@ import json
 import pygame
 import time
 import math
+import abilityLib
 #spritesheet
 Sheet = pygame.image.load("Kirbo Sprites.png")
 #metadata for spritesheet
 Datafile = json.load(open("Support.json"))
 
 class Object:
-    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
+    def __init__(self, charName,ability, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level):
         self.charName = charName
         #behavior type
         self.alive = True
+        self.inhaled = False
+        self.inhalingnum = 0
         self.speed = [0,0]
+        self.ability = ability
         self.location =[xlocation, ylocation]
         self.dir = "right"
         self.pallateName = pallate
@@ -36,27 +40,31 @@ class Object:
         self.flap = False
         self.crouching = False
         self.attack = False
-        self.mouthfull = False
+        self.firePressed = False
+        self.mouthfull = 0
+        self.collide = []
         self.renderLayer = renderLayer
         #add to array of all objects
-        (arrayDestination).append(self)
         self.objlist = arrayDestination
+        self.objlist.append(self)
+        self.getpoints()
 
     def delete(self):
         self.objlist.remove(self)
 
     def collideWithObj(self):
-        for object in self.objlist:
-            if object != self:
+        self.collide = []
+        for obj in self.objlist:
+            if obj != self:
                 #if top or bottom is between target body
-                if (self.location[1] >= object.location[1] and self.location[1] <= object.location[1]+object.spriteSize[1]) or (self.location[1]+self.spriteSize[1] >= object.location[1] and self.location[1]+self.spriteSize[1] <= object.location[1]+object.spriteSize[1]):
+                if (self.location[1] >= obj.location[1] and self.location[1] <= obj.location[1]+obj.spriteSize[1]) or (self.location[1]+self.spriteSize[1] >= obj.location[1] and self.location[1]+self.spriteSize[1] <= obj.location[1]+obj.spriteSize[1]):
                     #print(f"{self.charName} {self.pallateName}: Y-intersect")
                     #if left or right is between target body
-                    if (self.location[0] >= object.location[0] and self.location[0] <= object.location[0]+object.spriteSize[0]) or (self.location[0]+self.spriteSize[0] >= object.location[0] and self.location[0]+self.spriteSize[0] <= object.location[0]+object.spriteSize[0]):
+                    if (self.location[0] >= obj.location[0] and self.location[0] <= obj.location[0]+obj.spriteSize[0]) or (self.location[0]+self.spriteSize[0] >= obj.location[0] and self.location[0]+self.spriteSize[0] <= obj.location[0]+obj.spriteSize[0]):
                         #print(f"{self.charName} {self.pallateName}: X-intersect")
                         #print("COLLISION")
                         #return true
-                        return object
+                        self.collide.append(obj)
                         
 
     def getpoints(self):
@@ -259,7 +267,7 @@ class Object:
         
     def walk(self):
         if self.floating == False:
-            if self.mouthfull == False:
+            if self.mouthfull == 0:
                 self.playAnimation("Walk")
             else:
                 self.playAnimation("FullWalk")
@@ -351,7 +359,7 @@ class Object:
         except:
             pass
     def float(self):
-        if self.flap == False and self.attack == False and self.mouthfull == False:
+        if self.flap == False and self.attack == False and self.mouthfull == 0:
             self.flap = True
             self.flap = True
             if self.floating == False:
@@ -380,17 +388,19 @@ class Object:
             pass
 
 class Player(Object):
-    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
-        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+    def __init__(self, charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
+        Object.__init__(self,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
         self.alive = True
-        self.mouthfull = False
         self.attack = False
+        self.attack = False
+        self.startInhale = False
         self.respawnpoint = (xlocation,ylocation)
 
     def update(self,cam):
         Object.update(self,cam)
         if(self.alive == True):
             self.playerScript()
+            #print(self.location)
         else:
             self.deathfall(cam)
             self.animate()
@@ -398,26 +408,7 @@ class Player(Object):
 
     def playerScript(self):
         self.collisionTest()
-        collide = self.collideWithObj()
-        #code for death and inhale
-        if self.attack == True or self.floating == True:
-            self.fallSpeed = 2
-        else:
-            self.fallSpeed = 7
-        if isinstance(collide, Enemy):
-            if self.attack == True:
-                if self.dir == "right" and collide.right[0] > self.right[0]:
-                    self.mouthfull = True
-                    collide.Kill()
-                elif self.dir == "left" and collide.left[0] < self.left[0]:
-                    self.mouthfull = True
-                    collide.Kill()
-                else:
-                    self.Kill()
-            else:
-                self.Kill()
-        elif collide != None:
-            collide.playAnimationOnce("Death","Idle")
+        self.collideWithObj()
         #run physics sim
         if self.grounded == False:
             self.physicsSim()
@@ -425,7 +416,7 @@ class Player(Object):
             self.floating = False
             self.speed[1] = 0
         #grounded and ungrounded
-        if self.attack == True:
+        """if self.attack == True:
             for enemy in self.objlist:
                 if enemy != self:
                     if isinstance(enemy, Enemy):
@@ -457,13 +448,14 @@ class Player(Object):
                                     enemy.speed[1] = 0
                                 if enemy.right[0] < self.left[0]:
                                     #enemy.location[0] -= (enemy.location[0] - self.right[0])/5
-                                    enemy.speed[0] += 1
+                                    enemy.speed[0] += 1"""
         #check for input
         keys = pygame.key.get_pressed()
         if keys[pygame.K_i]:
             self.Kill()
         if keys[pygame.K_d]:
-            if self.startInhale ==False:
+            abilityLib.Copy(self)
+            """if self.startInhale ==False:
                 if self.mouthfull == False:
                     self.floating = False
                     if self.attack== False:
@@ -475,10 +467,10 @@ class Player(Object):
                     self.playAnimation("Full")
                     if self.attack == False:
                         self.mouthfull = False
-                        self.startInhale = True
+                        self.startInhale = True"""
         else:
             self.attack = False
-            self.startInhale = False
+            self.firePressed = False
                     
         if keys[pygame.K_LEFT] and self.attack == False:
             self.dir = "left"
@@ -499,23 +491,23 @@ class Player(Object):
         #print(self.animation)
         if self.grounded == True:
             if keys[pygame.K_DOWN]:
-                if self.mouthfull == False:
+                if self.mouthfull == 0:
                     self.crouch()
                 else:
-                    self.mouthfull = False
+                    self.mouthfull = 0
                     self.playAnimationOnce("Swallow","Crouch")
             else:
                 self.crouching = False
             self.floating = False
             if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
                 if self.attack == False:
-                    if self.mouthfull == False:
+                    if self.mouthfull == 0:
                         self.playAnimation("Walk")
                     else:
                         self.playAnimation("FullWalk")
             else:
                 if self.attack == False:
-                    if self.mouthfull == False:
+                    if self.mouthfull == 0:
 ##                        if self.crouching == False:
 ##                            self.playAnimation("Idle")
 ##                        else:
@@ -541,13 +533,13 @@ class Player(Object):
                 elif self.attack== True:
                     self.playAnimation("Inhale")
                 else:
-                    if self.mouthfull == False:
+                    if self.mouthfull == 0:
                         self.playAnimationOnce("Roll","Fall")
                     else:
                         self.playAnimation("FullJump")
             if self.speed[1] > 0:
                 if self.floating == False:
-                    if self.mouthfull == False:
+                    if self.mouthfull == 0:
                         self.playAnimation("Fall")
                         if self.attack== True:
                             self.playAnimation("Inhale")
@@ -559,7 +551,7 @@ class Player(Object):
                     self.playAnimation("Float")
             else:
                 if self.floating == False:
-                    if self.mouthfull == False:
+                    if self.mouthfull == 0:
                         self.playAnimation("Jump")
                     elif self.attack== True:
                         self.playAnimation("Inhale")
@@ -569,7 +561,29 @@ class Player(Object):
                 self.float()
             else:
                 self.flap = False
-
+        
+        #code for death and inhale
+        if self.attack == True or self.floating == True:
+            self.fallSpeed = 2
+        else:
+            self.fallSpeed = 7
+        for obj in self.collide:
+            if isinstance(obj, Enemy):
+                if self.attack == False:
+                    self.Kill()
+                """if self.dir == "right" and collide.right[0] > self.right[0]:
+                    self.mouthfull = True
+                    collide.Kill()
+                elif self.dir == "left" and collide.left[0] < self.left[0]:
+                    self.mouthfull = True
+                    collide.Kill()
+                else:
+                    self.Kill()
+            else:
+                self.Kill()
+        elif collide != None:
+            collide.playAnimationOnce("Death","Idle")"""
+                
         #top blocked only
         if self.blockedTop == True:
             self.speed[1] = 2
@@ -643,7 +657,7 @@ class Player(Object):
             print("Player Death")
             self.alive = False
             self.floating = False
-            self.mouthfull = False
+            self.mouthfull = 0
             self.attack = False
             self.grounded = False
             time.sleep(1)
@@ -652,7 +666,9 @@ class Player(Object):
 
     def deathfall(self, cam):
         self.fallSpeed = 7
+        cam.lockMove = True
         if self.location[1] > cam.ypos+256:
+            cam.lockMove = False
             self.respawn(cam)
         self.playAnimation("Death")
         self.speed[0] = 0
@@ -669,8 +685,8 @@ class NPC(Object):
 #class Block(Object):
 
 class Enemy(Object):
-    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
-        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+    def __init__(self, charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
+        Object.__init__(self,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
         self.behaviorItr = 0
         self.interrupted = False
         self.behaviorTimer = 0
@@ -765,10 +781,11 @@ class Enemy(Object):
         for Object in self.objlist:
             if isinstance(Object, Player):
                 if Object.attack == True:
-                    if (self.right[1]-Object.right[1]) < 16 and (self.right[1]-Object.right[1]) > -16:
+                    if (self.left[1]-Object.right[1]) < 16 and (self.right[1]-Object.left[1]) > -16:
                         
                         if Object.dir == "right" and (self.left[0]-Object.right[0]) <= 40 and (self.left[0]-Object.right[0]) >= 0:
                             self.interrupted = True
+                            self.inhaled = True
                             if self.StunItr != 10:
                                 self.speed[0] = 0
                                 self.speed[1] = 0
@@ -776,16 +793,20 @@ class Enemy(Object):
                                 
                         elif Object.dir == "left" and (Object.left[0]-self.right[0]) <= 40 and (Object.left[0]-self.right[0]) >= 0:
                             self.interrupted = True
+                            self.inhaled = True
                             if self.StunItr != 10:
                                 self.speed[0] = 0
                                 self.speed[1] = 0
                                 self.StunItr += 1
                         else:
                             self.interrupted = False
+                            self.inhaled = False
                     else:
                         self.interrupted = False
+                        self.inhaled = False
                 else:
                     self.interrupted = False
+                    self.inhaled = False
                     self.StunItr = 0
 
     def behavior(self):
@@ -804,17 +825,22 @@ class Enemy(Object):
             self.playAnimationOnce("Roll","Fall")
 
 class Attack(Object):
-    def __init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,lifespan,alligience):
-        Object.__init__(self, charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+    def __init__(self, charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,lifespan,alligience,mode):
+        Object.__init__(self, charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
         self.lifespan = lifespan
         self.alligience = alligience
+        self.mode = mode
         #self.persistant = persistant
         self.angle = 0
     def update(self,mainCam):
         Object.update(self,mainCam)
         if self.lifespan > 0:
-            self.circleMove(30,80,(150,100))
+            if self.mode.lower() == "circle":
+                self.circleMove(30,80,(150,100))
+            elif self.mode.lower() == "line":
+                self.lineMove(10,10)
             self.lifespan -= 1
+            self.collideWithObj()
             self.hitCheck()
         else:
             self.delete()
@@ -830,13 +856,16 @@ class Attack(Object):
         self.location[0] = center[0] + (math.cos(self.angle))*radiusx
         self.location[1] = center[1] + (math.sin(self.angle))*radiusy
             
-    def lineMove(self):
-        pass
+    def lineMove(self,dirx,diry):
+        self.location[0] += dirx
+        self.location[1] += diry
     def hitCheck(self):
-        hitObj = self.collideWithObj()
-        if hitObj != None and type(hitObj) != type(self.alligience):
-            hitObj.Kill()
-            print("Dip")
+        for hitObj in self.collide:
+            #print(type(hitObj))
+            if hitObj != None and type(hitObj) != type(self.alligience) and type(hitObj) != type(self):
+                print(type(self.alligience))
+                hitObj.Kill()
+                print("Dip")
     def moveTo(self,x,y):
         self.location = (x,y)
 #class Trigger(Object):
