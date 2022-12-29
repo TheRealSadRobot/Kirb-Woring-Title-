@@ -68,7 +68,7 @@ Datafile = json.load(open("Support.json"))
         #locations of Music and BGs
 #def main
 def main():
-    level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
+    level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
     mainCam = camLib.Camera(level,None)
     toolbarMake(level)
     #while True

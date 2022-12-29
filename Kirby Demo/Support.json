@@ -21,7 +21,7 @@
                 "Full":[["FullIdle",55]],
                 "FullWalk":[["FullWalk1", 7],["FullWalk2", 5],["FullWalk3", 7],["FullWalk2", 5]],
                 "FullJump":[["FullWalk1", 7]],
-                "Spit":[],
+                "Spit":[["FullSpit1",5],["FullSpit2",5],["Puff2",5]],
                 "AirSpit":[],
                 "Swallow":[["FullSpit1",5],["Swallow",1],["Crouch", 2]],
                 "Float":[["Float1",20],["Float2",20]],
@@ -31,6 +31,16 @@
                 "Paint":[],
                 "Hurt":[],
                 "Interact":[]
+            },
+            "Star":
+            {
+                "Shoot":[["Shoot1",5],["Shoot2",5],["Shoot1",5,180],["Shoot2",5,180]],
+                "BigShot":[]
+            },
+            "StarBall":
+            {
+                "Idle":[["Roll1",5]],
+                "BigShot":[]
             }
         },
         "Pallates":
@@ -45,6 +55,18 @@
             "Ado":
             {
 	
+            },
+            "Star":
+            {
+                "Normal":[[145,74,1],[253,220,148],[255,255,255],[255,255,255]],
+                "Shoot1":[[145,74,1],[253,220,148],[255,255,255],[255,255,255]],
+                "Shoot2":[[145,74,1],[253,220,148],[253,220,148],[255,255,255]]
+            },
+            "StarBall":
+            {
+                "Normal":[[145,74,1],[253,220,148],[255,255,255],[255,255,255]],
+                "Shoot1":[[145,74,1],[253,220,148],[255,255,255],[255,255,255]],
+                "Shoot2":[[145,74,1],[253,220,148],[253,220,148],[255,255,255]]
             }
         },
         "ColorLists":
@@ -94,6 +116,18 @@
                 "Ladder1":[],
                 "Ladder2":[],
                 "Interact":[]
+            },
+            "Star":
+            {
+                "Shoot1":[0,48],
+                "Shoot2":[16,48],
+                "BigShot":[32,48]
+            },
+            "StarBall":
+            {
+                "Roll1":[40,48],
+                "Roll2":[56,48],
+                "Squish":[72,48]
             },
             "Ado":
             {
@@ -177,6 +211,18 @@
                 "Ladder1":[],
                 "Ladder2":[],
                 "Interact":[]
+            },
+            "Star":
+            {
+                "Shoot1":[16,16],
+                "Shoot2":[16,16],
+                "BigShot1":[8,8]
+            },
+            "StarBall":
+            {
+                "Roll1":[16,16],
+                "Roll2":[16,16],
+                "Squish":[16,8]
             },
             "Ado":
             {
@@ -269,7 +315,7 @@
         {
             "Castle":
             {
-                "Air":[48,48],
+                "Air":[1000,700],
                 "FloorStraight1":[0,0],
                 "Deepfloor1":[8,0],
                 "Floor451":[16,0],
@@ -297,7 +343,7 @@
             },
             "Beach":
             {
-                "Air":[48,48],
+                "Air":[1000,700],
                 "FloorStraight1":[48,0],
                 "Deepfloor1":[56,0],
                 "Floor451":[64,0],
@@ -325,7 +371,7 @@
             },
             "Military Base":
             {
-                "Air":[48,48],
+                "Air":[1000,700],
                 "FloorStraight1":[96,0],
                 "Deepfloor1":[104,0],
                 "Floor451":[112,0],
