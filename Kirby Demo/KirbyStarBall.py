@@ -13,7 +13,40 @@ import camLib
 import StarballLib
 import HostLib
 import time
+import threading
+from functools import partial
 #create window
+
+def getData(theBall, items, connectionHost):
+    while True:
+        global datalist
+        datalist = []
+        for item in items:
+            try:
+                if item == theBall:
+                    #print("sending data")
+                    HostLib.sendToClient(item.sendList,connectionHost)
+                #print("Testing next obj")
+                if item.multiplayerMode != "HOST":
+                    ##print("object is network-based")
+                    data = HostLib.loop(item.multiplayerMode)
+                    datalist.append(data)
+                    ##print("got data")
+                else:
+                    if item == theBall:
+                        #print("waiting for data")
+                        data = HostLib.loop(connectionHost)
+                        datalist.append(data)
+                    else:
+                        HostLib.sendToClient(item.sendList,connectionHost)
+                    ##print("object is host:")
+                    #print("sent data")
+            except Exception as e:
+                #itr += 1
+                print(e)
+                #print("communication breakdown:", item.charName, item.pallateName)
+                pass
+
 hostvar = int(input("1.Host\n2.Clint"))
 pygame.init()
 screenscale = 1
@@ -82,46 +115,29 @@ else:
 #loop
 inputs = pygame.key.get_pressed()
 itr = 0
+global datalist
+datalist = []
+inputThread = threading.Thread(target = partial(getData, theBall, Objects, connectionHost))
+inputThread.daemon = True
+connectionHost.settimeout(0.01)
+inputThread.start()
+
 while True:
+    print(datalist)
     MainRoom.loadLevel(TileLayer, mainCam)
     #time.sleep(0.05)
     fpstimer.tick(60)
     #update gameobjects
     #send data over network
     keys = pygame.key.get_pressed()
-    datalist = []
     for item in Objects:
         #print(f"{item.charName}{item.pallateName} update cycle")
         item.update(mainCam)
         
-        try:
-            if item == theBall:
-                #print("sending data")
-                HostLib.sendToClient(item.sendList,connectionHost)
-            #print("Testing next obj")
-            if item.multiplayerMode != "HOST":
-                ##print("object is network-based")
-                data = HostLib.loop(item.multiplayerMode)
-                datalist.append(data)
-                ##print("got data")
-            else:
-                if item == theBall:
-                    #print("waiting for data")
-                    data = HostLib.loop(connectionHost)
-                    datalist.append(data)
-                else:
-                    HostLib.sendToClient(item.sendList,connectionHost)
-                ##print("object is host:")
-                #print("sent data")
-        except Exception as e:
-            #itr += 1
-            print(e)
-            #print("communication breakdown:", item.charName, item.pallateName)
-            pass
     for data in datalist:
         for object in Objects:
             if object.ID == data[7]:
-                print("match found: ", object.ID)
+                #print("match found: ", object.ID)
                 if object == theBall:
                     object.ballchecks(data,connectionHost)
                     if item.multiplayerMode != "HOST":
