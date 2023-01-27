@@ -18,6 +18,7 @@ winsizex = 256
 winsizey = 240
 xval = 0
 yval = 0
+invis = (0,255,62)
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
 fpstimer = pygame.time.Clock()
 #title screen:
@@ -55,29 +56,39 @@ fpstimer = pygame.time.Clock()
 Objects = []
 #layer for sprites
 #layer for BG tiles
+base = pygame.Surface((winsizex, winsizey))
+base.fill((0,0,0))
+backLayer = pygame.Surface((winsizex, winsizey))
 TileLayer = pygame.Surface((winsizex, winsizey))
 charLayer = pygame.Surface((winsizex, winsizey))
-charLayer.set_colorkey((0,0,0))
+charLayer.set_colorkey(invis)
+backLayer.set_colorkey(invis)
+TileLayer.set_colorkey(invis)
 displayPane = pygame.Surface((winsizex,winsizey))
 
 MainRoom = levelLib.Level("Castle", "TestRoom1",Objects,charLayer)
-Player = gameLib.Player("Kirby","Copy",56,100,Objects,charLayer, "Normal",MainRoom, "HOST")
+Water = gameLib.fluid(1,"Water",100,160,80,80,Objects,backLayer,"Water",MainRoom)
+Player = gameLib.Player(0,"Kirby","Copy",56,100,Objects,charLayer, "Normal",MainRoom, "HOST")
 #Test = gameLib.Attack("Kirby","None",150,100,Objects,charLayer,"Dee",MainRoom,500,Player,"circle")
 mainCam = camLib.Camera(MainRoom,Player)
 #loop
 while True:
     MainRoom.loadLevel(TileLayer, mainCam)
-    #time.sleep(0.05)
+    #time.sleep(0.1)
     fpstimer.tick(60)
     #update gameobjects
     for item in Objects:
+        #print(item.charName)
         item.update(mainCam)
     mainCam.update()
     #draw the frame
+    displayPane.blit(base,(0,0))
+    displayPane.blit(backLayer, (0,0))
     displayPane.blit(TileLayer, (0,0))
     displayPane.blit(charLayer, (0,0))
-    charLayer.fill((0,0,0))
-    TileLayer.fill((0,0,0))
+    charLayer.fill(invis)
+    TileLayer.fill(invis)
+    backLayer.fill(invis)
     window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
     #put the stuff from the frame onto the window
     pygame.display.flip()

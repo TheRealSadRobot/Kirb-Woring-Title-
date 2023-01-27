@@ -20,7 +20,7 @@ class Level:
         for Object in self.file.get("Objects"):
             objectData =self.file['Objects'][Object]
             className = getattr(gameLib,f"{self.file['Objects'][Object][0]}")
-            objectInLevel = className(objectData[1],objectData[2],objectData[3],objectData[4],renderLayer,objList,objectData[7],self)
+            objectInLevel = className(objectData[1],objectData[2],objectData[3],objectData[4],objectData[5],renderLayer,objList,objectData[8],self)
 
     def loadLevel(self, Receptacle, camera):
         for y in range(len(self.collisionData)):
