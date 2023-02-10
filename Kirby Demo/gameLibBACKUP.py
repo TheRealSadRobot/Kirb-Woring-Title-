@@ -27,12 +27,12 @@ class Object:
         self.dir = "right"
         self.pallateName = pallate
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.fallSpeed = 3
+        self.fallSpeed = 7
         self.fallingTime = 0
         self.walkSpeed = 1
         self.runSpeed = 2
         self.swimSpeed = 1
-        self.jumpHeight = 10
+        self.jumpHeight = 15
         self.sizex = 16
         self.sizey = 16
         self.actTimer = 0
@@ -241,7 +241,6 @@ class Object:
         except:
             pass
 
-    def drawPoints(self):
         try:
             pygame.draw.rect(self.renderLayer,(255,0,0),(self.top[0]-self.camera.xpos,self.top[1]-self.camera.ypos,1,1))
             pygame.draw.rect(self.renderLayer,(255,255,0),(self.bottom[0]-self.camera.xpos,self.bottom[1]-self.camera.ypos,1,1))
@@ -250,19 +249,6 @@ class Object:
             #time.sleep(0.01)
         except:
             pass
-    
-    def squishTop(self):
-        if self.floating == False and self.mouthfull == False and self.speed[1] < 0:
-            if self.actTimer == 0:
-                #print("squish here")
-                self.setCollideBoxSize(8,8)
-                self.getpoints()
-                self.location[1] += self.distanceToCollide(self.top,1,-1)
-                self.getpoints()
-                self.playAnimation("Crouch")
-                self.actTimer = 10
-                #print("Hitbox Was Squished")
-
 
     def setCollideBoxSize(self,xSize,ySize):
         self.sizex = xSize
@@ -403,50 +389,27 @@ class Object:
         pass
 
     def collisionCorrect(self):
-        #print(self.blockedLeft,self.blockedRight,self.blockedTop,self.grounded)
         if self.collisionCheck(self.location):
-            print("dip")
-            leftDist = self.distanceToNotCollideInRange(self.location,0,-1)
-            rightDist = self.distanceToNotCollideInRange(self.location,0,1)
-            topDist = self.distanceToNotCollideInRange(self.location,1,-1)
-            bottomDist = self.distanceToNotCollideInRange(self.location,1,1)
-            distList = [topDist, rightDist, bottomDist, leftDist]
-            distNameList = ["TOP","RIGHT","BOTTOM","LEFT"]
-            finalDistIndex = 0
-            for index in range(len(distList)):
-                print(f"Checking {distNameList[finalDistIndex]} against {distNameList[index]}")
-                if abs(distList[index-1]) < abs(distList[finalDistIndex]):
-                    finalDistIndex = index-1
-                    print(f"Switching to {distNameList[index]}")
-            if finalDistIndex == 0 or finalDistIndex == 2:
-                self.location[1] += distList[finalDistIndex]
-            else:
-                self.location[0] += distList[finalDistIndex]
-        """if self.collisleftionCheck(self.location):
-            #print(self.location)
+            print(self.location)
             if self.speed[1]>=0:
                 self.location[1] += self.distanceToNotCollide(self.location,1,-1)
-                self.getpoints()
                 self.location[1] += self.distanceToNotCollide(self.bottom,1,-1)
                 self.grounded = True
                 self.speed[1] = 0
             elif self.speed[1]<0:
                 self.location[1] += self.distanceToNotCollide(self.location,1,1)
-                self.getpoints()
                 self.location[1] += self.distanceToNotCollide(self.top,1,1)
                 self.blockedTop = True
                 self.speed[1] = 0
             elif self.speed[0]>0:
                 self.location[0] += self.distanceToNotCollide(self.location,0,-1)
-                self.getpoints()
                 self.location[0] += self.distanceToNotCollide(self.right,0,-1)
                 self.blockedRight = True
             elif self.speed[0]<0:
                 self.location[0] += self.distanceToNotCollide(self.location,0,1)
-                self.getpoints()
                 self.location[0] += self.distanceToNotCollide(self.left,0,1)
                 self.blockedLeft = True
-            self.getpoints()"""
+            self.getpoints()
         
         if self.grounded == True:
             if self.blockedTop == False:
@@ -463,7 +426,7 @@ class Object:
                 #give up
         if self.blockedTop == True:
             if self.grounded == False:
-                self.location[1]+=self.distanceToNotCollide(self.top,1,1)-1
+                self.location[1]+=self.distanceToNotCollide(self.top,1,1)+1
             """elif self.blockedLeft == False:
                 self.location[0]+=self.distanceToNotCollide(self.top,0,-1)-1
             elif self.blockedRight == False:
@@ -569,6 +532,13 @@ class Object:
             print(e)
     
     def move(self):
+        movespeed = [0,0]
+        if self.speed[0]%1 != 0:
+            self.speedbuffer[0] += self.speed[0]%1
+            movespeed[0] = self.speed[0]-self.speedbuffer[0]+(self.speedbuffer[0]-self.speedbuffer[0]%1)
+            self.speedbuffer -= (self.speedbuffer[0]-self.speedbuffer[0]%1)
+        else:
+            movespeed[0] = self.speed[0]
         if self.alive == True:
             if (self.speed[0] > 0 and not self.blockedRight) or (self.speed[0] < 0 and not self.blockedLeft):
                 if self.speed[0] > 0:
@@ -579,9 +549,9 @@ class Object:
                 #self.speed[0] = 0
             if (self.speed[1] > 0 and not self.grounded) or (self.speed[1] < 0 and not self.blockedTop):
                 if self.speed[1] > 0:
-                    self.location[1] += math.ceil(self.speed[1])
+                    self.location[1] += math.ceil(self.speed[1]/2)
                 else:
-                    self.location[1] += math.floor(self.speed[1])
+                    self.location[1] += math.floor(self.speed[1]/2)
             #else:
                 #self.speed[1] = 0
             self.getpoints()
@@ -597,9 +567,9 @@ class Object:
             else:
                 self.location[0] += math.floor(self.speed[0])
             if self.speed[1] > 0:
-                    self.location[1] += math.ceil(self.speed[1])
+                    self.location[1] += math.ceil(self.speed[1]/2)
             else:
-                self.location[1] += math.floor(self.speed[1])
+                self.location[1] += math.floor(self.speed[1]/2)
 
     def getTileType(self,point):
         """try:
@@ -785,17 +755,16 @@ class Object:
             self.playAnimation("Descend")
 
     def swimUp(self):
-        if self.speed[1] > -1:
-            self.speed[1] += -1
+        self.grounded == False
+        if self.speed[1] > 0:
+            self.speed[1] += -1.5
         else:
-            self.speed[1] = -1
+            self.speed[1] = -2
         self.grounded = False
-        print(self.speed[1])
-        if not self.checkIfPointSubmerged(self.top) and self.speed[1] <= -1:
-            print("dip")
+        if not self.checkIfPointSubmerged(self.location) and self.speed[1] <= -2:
             self.jump()
     def swimDown(self):
-        if self.speed[1] < 1:
+        if self.speed[1] < 2:
             self.speed[1] += 1
 
     def fall(self):
@@ -833,16 +802,10 @@ class Object:
                         self.playAnimation("FullWalk")
                 if self.dir == "right":
                     if self.blockedRight == False:
-                        if self.speed[0] < 1:
-                            self.speed[0] += 1
-                        else:
-                            self.speed[0] = 1
+                        self.speed[0] = 1
                 elif self.dir == "left":
                     if self.blockedLeft == False:
-                        if self.speed[0] > -1:
-                            self.speed[0] += -1
-                        else:
-                            self.speed[0] = -1
+                        self.speed[0] = -1
                 else:
                     self.speed[0] = 0
             else:
@@ -869,16 +832,10 @@ class Object:
                     self.playAnimation("FullWalk")
             if self.dir == "right":
                 if self.blockedRight == False:
-                    if self.speed[0] < 2:
-                        self.speed[0] += 1
-                    else:
-                        self.speed[0] = 1
+                    self.speed[0] = 2
             elif self.dir == "left":
                 if self.blockedLeft == False:
-                    if self.speed[0] > -2:
-                        self.speed[0] += -1
-                    else:
-                        self.speed[0] = -1
+                    self.speed[0] = -2
             try:
                 self.behaviorTimer += 1
                 if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
@@ -977,7 +934,7 @@ class Object:
                     self.playAnimation("Jump")
                 else:
                     self.playAnimation("FullJump")
-                #self.location[1] -= 2
+                self.location[1] -= 2
                 self.grounded = False
                 self.speed[1] = -(self.jumpHeight)
         try:
@@ -1092,20 +1049,19 @@ class Player(Object):
         if(self.alive == True):
             #print(self.location,self.blockedLeft,self.blockedRight,self.blockedTop,self.grounded)
             self.getLadderCollide()
-            self.submergedCheck()
             self.playerScript()
             self.move()
             #self.run()
             #self.physicsSim()
             self.collisionTests()
             self.collisionCorrect()
+            self.squish()
             ##print(self.location)
         else:
             self.deathfall(cam)
             self.move()
             self.physicsSim()
         self.animate()
-        self.drawPoints()
         self.render()
         self.wasBlockedLeft = self.blockedLeft
         self.wasBlockedRight = self.blockedRight
@@ -1124,31 +1080,28 @@ class Player(Object):
             self.speed[1] = 0
         #grounded and ungrounded
         #check for input
-        if self.actTimer > 0:
-            self.keys = self.lastkeys
         if self.multiplayerMode == "HOST":
             self.keys = pygame.key.get_pressed()
             self.lastkeys = self.keys
         else:
             self.keys = self.lastkeys
-            
         if self.keys[pygame.K_i]:
             self.Kill()
             self.climb = False
         #print(self.submerged)
         if self.attack == True or self.floating == True:
-            self.fallSpeed = 1
+            self.fallSpeed = 2
         elif self.climb == True:
             self.fallSpeed = 0
         elif self.submerged > 2:
             #print("wet")
-            self.fallingTime = 0
-            if self.fallSpeed > 1:
-                self.fallSpeed -= 1
+            if self.fallSpeed > 0.5:
+                self.fallSpeed -= 0.5
         else:
-            self.fallSpeed = 3
+            self.fallSpeed = 7
+        self.submergedCheck()
         
-        if self.actTimer == 0:
+        if self.actTimer == 0:       
             if self.keys[pygame.K_d]:
                 if self.submerged > 2:
                     if self.actTimer == 0:
@@ -1257,29 +1210,36 @@ class Player(Object):
                     self.speed[0] = 0
                     if self.attack == False:
                         self.wait()
-                            
-            if self.attack == False and self.grounded == False:
-                self.fallingTime += 1
-            else:
-                self.fallingTime == 0
-                
-            for obj in self.collide:
-                #print("Dip")
+                        
+        if self.attack == False and self.grounded == False:
+            self.fallingTime += 1
+            
+        for obj in self.collide:
+            #print("Dip")
 
-                if isinstance(obj, Enemy):
-                    #print(obj.inhaled)
-                    if obj.inhaled == False:
-                        self.Kill()
+            if isinstance(obj, Enemy):
+                #print(obj.inhaled)
+                if obj.inhaled == False:
+                    self.Kill()
         
         
         #print(self.speed)#[1],self.fallSpeed,self.speed[1])
+    def squish(self):
+        if self.floating == False and self.mouthfull == False:
+            if self.blockedTop and not self.wasBlockedTop:
+                if self.speed[1] < 0:
+                    self.playAnimationOnce("CeilingSquish","Fall")
+            if self.blockedLeft and not self.wasBlockedLeft:
+                if abs(self.speed[0]) > 0:
+                    self.playAnimationOnce("WallSquish","Idle")
+            if self.blockedRight and not self.wasBlockedRight:
+                if abs(self.speed[0]) > 0:
+                    self.playAnimationOnce("WallSquish","Idle")
     def physicsSim(self):
         if self.speed[1] < self.fallSpeed:
             self.speed[1] += 1
         else:
             self.speed[1] = self.fallSpeed
-        if self.blockedTop == True:
-            self.squishTop()
 
     def Kill(self):
         if self.alive == True:
