@@ -67,14 +67,14 @@ TileLayer.set_colorkey(invis)
 displayPane = pygame.Surface((winsizex,winsizey))
 
 MainRoom = levelLib.Level("Castle", "TestRoom1",Objects,charLayer)
-Water = gameLib.fluid(1,"Water",100,160,80,80,Objects,backLayer,"Water",MainRoom)
-Player = gameLib.Player(0,"Kirby","Copy",56,100,Objects,charLayer, "Normal",MainRoom, "HOST")
+Water = gameLib.fluid(1,"Water",100,50,80,400,Objects,backLayer,"Water",MainRoom)
+Player = gameLib.Player(0,"Kirby","copy",56,100,Objects,charLayer, "Normal",MainRoom, "HOST")
 #Test = gameLib.Attack("Kirby","None",150,100,Objects,charLayer,"Dee",MainRoom,500,Player,"circle")
 mainCam = camLib.Camera(MainRoom,Player)
 #loop
 while True:
     MainRoom.loadLevel(TileLayer, mainCam)
-    #time.sleep(0.1)
+    #time.sleep(0.2)
     fpstimer.tick(60)
     #update gameobjects
     for item in Objects:

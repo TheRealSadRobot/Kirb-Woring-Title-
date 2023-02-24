@@ -27,12 +27,13 @@ class Object:
         self.dir = "right"
         self.pallateName = pallate
         self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.fallSpeed = 3
+        self.maxfallspeed = 3
+        self.fallspeed = 1
         self.fallingTime = 0
         self.walkSpeed = 1
         self.runSpeed = 2
         self.swimSpeed = 1
-        self.jumpHeight = 10
+        self.jumpHeight = 15
         self.sizex = 16
         self.sizey = 16
         self.actTimer = 0
@@ -333,15 +334,6 @@ class Object:
         self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
         self.spriteCoordinates = Datafile["Character"]["SpriteCoordinates"][self.charName][self.animFrame]
         ##print(f"{self.grounded}\b")
-        try:
-            spriteAlterx = 0
-            spriteAltery = 0
-            #spriteAlterx = self.spriteSize[0]-Datafile["Character"]["SpriteSize"]["Overrides"][self.charName][self.animFrame][0]
-            #spriteAltery = self.spriteSize[1]-Datafile["Character"]["SpriteSize"]["Overrides"][self.charName][self.animFrame][1]
-            #self.location[1]+= spriteAltery
-        except:
-            spriteAlterx = 0
-            spriteAltery = 0
         self.sprite = pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
         ##print(self.sprite.get_size())
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
@@ -352,9 +344,12 @@ class Object:
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
         self.sprite.set_colorkey((0,255,62))
         if self.dir == "right":
-            self.renderLayer.blit(self.sprite, (self.location[0]+spriteAlterx-self.camera.xpos-int(self.spriteSize[0]/2),self.location[1]+spriteAltery-self.camera.ypos-int(self.spriteSize[1]/2)), (0,0,self.spriteSize[0],self.spriteSize[1]))
+            self.renderLayer.blit(self.sprite,
+                                  (int(self.location[0]-self.camera.xpos-(self.spriteSize[0]/2)),
+                                   int(self.location[1]-self.camera.ypos-(self.spriteSize[1]/2))),
+                                  (0,0,self.spriteSize[0],self.spriteSize[1]))
         else:
-            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (self.location[0]+spriteAlterx-self.camera.xpos-int(self.spriteSize[0]/2),self.location[1]+spriteAltery-self.camera.ypos-int(self.spriteSize[1]/2)), (0,0,self.spriteSize[0],self.spriteSize[1]))
+            self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (int(self.location[0]-self.camera.xpos-(self.spriteSize[0]/2)),int(self.location[1]-self.camera.ypos-(self.spriteSize[1]/2))), (0,0,self.spriteSize[0],self.spriteSize[1]))
         
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -405,19 +400,19 @@ class Object:
     def collisionCorrect(self):
         #print(self.blockedLeft,self.blockedRight,self.blockedTop,self.grounded)
         if self.collisionCheck(self.location):
-            print("dip")
+            #print("dip")
             leftDist = self.distanceToNotCollideInRange(self.location,0,-1)
             rightDist = self.distanceToNotCollideInRange(self.location,0,1)
             topDist = self.distanceToNotCollideInRange(self.location,1,-1)
             bottomDist = self.distanceToNotCollideInRange(self.location,1,1)
             distList = [topDist, rightDist, bottomDist, leftDist]
-            distNameList = ["TOP","RIGHT","BOTTOM","LEFT"]
+            #distNameList = ["TOP","RIGHT","BOTTOM","LEFT"]
             finalDistIndex = 0
             for index in range(len(distList)):
-                print(f"Checking {distNameList[finalDistIndex]} against {distNameList[index]}")
+                #print(f"Checking {distNameList[finalDistIndex]} against {distNameList[index]}")
                 if abs(distList[index-1]) < abs(distList[finalDistIndex]):
                     finalDistIndex = index-1
-                    print(f"Switching to {distNameList[index]}")
+                    #print(f"Switching to {distNameList[index]}")
             if finalDistIndex == 0 or finalDistIndex == 2:
                 self.location[1] += distList[finalDistIndex]
             else:
@@ -579,9 +574,9 @@ class Object:
                 #self.speed[0] = 0
             if (self.speed[1] > 0 and not self.grounded) or (self.speed[1] < 0 and not self.blockedTop):
                 if self.speed[1] > 0:
-                    self.location[1] += math.ceil(self.speed[1])
+                    self.location[1] += math.ceil(self.speed[1]/2)
                 else:
-                    self.location[1] += math.floor(self.speed[1])
+                    self.location[1] += math.floor(self.speed[1]/2)
             #else:
                 #self.speed[1] = 0
             self.getpoints()
@@ -597,9 +592,9 @@ class Object:
             else:
                 self.location[0] += math.floor(self.speed[0])
             if self.speed[1] > 0:
-                    self.location[1] += math.ceil(self.speed[1])
+                    self.location[1] += math.ceil(self.speed[1]/2)
             else:
-                self.location[1] += math.floor(self.speed[1])
+                self.location[1] += math.floor(self.speed[1]/2)
 
     def getTileType(self,point):
         """try:
@@ -640,6 +635,7 @@ class Object:
             tilecountx = int(point[0]//8)
             ##print(f"{self.charName} {self.pallateName} has it's x test")
             tilecounty = int(point[1]//8)
+            point = (int(point[0]),int(point[1]))
             ##print(f"{self.charName} {self.pallateName} has it's y test")
             #print(tilecountx,tilecounty)
             tilenum = str(self.currentLevel.collisionData[tilecounty][tilecountx])
@@ -785,17 +781,16 @@ class Object:
             self.playAnimation("Descend")
 
     def swimUp(self):
-        if self.speed[1] > -1:
+        if self.speed[1] > -2:
             self.speed[1] += -1
         else:
-            self.speed[1] = -1
+            self.speed[1] = -2
         self.grounded = False
-        print(self.speed[1])
-        if not self.checkIfPointSubmerged(self.top) and self.speed[1] <= -1:
-            print("dip")
+        if not self.checkIfPointSubmerged(self.top) and self.speed[1] <= -2:
+            #print("dip")
             self.jump()
     def swimDown(self):
-        if self.speed[1] < 1:
+        if self.speed[1] < 2:
             self.speed[1] += 1
 
     def fall(self):
@@ -870,15 +865,15 @@ class Object:
             if self.dir == "right":
                 if self.blockedRight == False:
                     if self.speed[0] < 2:
-                        self.speed[0] += 1
+                        self.speed[0] += 2
                     else:
-                        self.speed[0] = 1
+                        self.speed[0] = 2
             elif self.dir == "left":
                 if self.blockedLeft == False:
                     if self.speed[0] > -2:
-                        self.speed[0] += -1
+                        self.speed[0] += -2
                     else:
-                        self.speed[0] = -1
+                        self.speed[0] = -2
             try:
                 self.behaviorTimer += 1
                 if self.behaviorTimer >= self.behaviors[self.behaviorItr][1]:
@@ -997,7 +992,7 @@ class Object:
                 self.playAnimationOnce("Inflate", "Float")
             else:
                 self.playAnimationOnce("Flap","Float")
-            self.speed[1] = -self.jumpHeight/2
+            self.speed[1] = int(-self.jumpHeight/2)
         try:
             self.behaviorTimer = 0
             self.behaviorItr += 1
@@ -1135,30 +1130,48 @@ class Player(Object):
         if self.keys[pygame.K_i]:
             self.Kill()
             self.climb = False
+        if self.keys[pygame.K_c]:
+            if self.ability == "copy":
+                self.ability = "beam"
+                print("Ability switched to: BEAM")
+            elif self.ability == "beam":
+                self.ability = "copy"
+                print("Ability switched to: COPY")
         #print(self.submerged)
         if self.attack == True or self.floating == True:
-            self.fallSpeed = 1
+            self.fallspeed = 1
+            self.maxfallspeed = 2
         elif self.climb == True:
-            self.fallSpeed = 0
+            self.maxfallspeed = 0
         elif self.submerged > 2:
             #print("wet")
             self.fallingTime = 0
-            if self.fallSpeed > 1:
-                self.fallSpeed -= 1
+            self.fallspeed = 0.25
+            self.maxfallspeed = 0.5
         else:
-            self.fallSpeed = 3
+            self.fallspeed = 1
+            self.maxfallspeed = 7
         
         if self.actTimer == 0:
             if self.keys[pygame.K_d]:
                 if self.submerged > 2:
                     if self.actTimer == 0:
                         if self.attack == True or self.mouthfull > 0:
-                            abilityLib.Copy(self)
-                            self.climb = False
+                            try:
+                                getattr(abilityLib,f"{self.ability}Attack")(self)
+                            except Exception as e:
+                                print(e)
+                                abilityLib.Copy(self)
+                                self.climb = False
                         else:
                             abilityLib.WaterSpit(self)
                 else:
-                    abilityLib.Copy(self)
+                    try:
+                        getattr(abilityLib,f"{self.ability}Attack")(self)
+                    except Exception as e:
+                        print(e)
+                        abilityLib.Copy(self)
+                        self.climb = False
                 self.climb = False
             else:
                 self.attack = False
@@ -1172,6 +1185,7 @@ class Player(Object):
                     elif self.submerged > 2:
                         self.swimUp()
             if self.keys[pygame.K_z]:
+                print(self.speed[1])
                 print(self.ladderCollide)
             if self.keys[pygame.K_DOWN]:
                 if self.submerged > 2:
@@ -1272,12 +1286,14 @@ class Player(Object):
                         self.Kill()
         
         
-        #print(self.speed)#[1],self.fallSpeed,self.speed[1])
+        #print(self.speed)#[1],self.maxfallspeed,self.speed[1])
     def physicsSim(self):
-        if self.speed[1] < self.fallSpeed:
-            self.speed[1] += 1
+        if self.speed[1] < self.maxfallspeed:
+            self.speed[1] += self.fallspeed
+        elif self.speed[1] > self.maxfallspeed:
+            self.speed[1] -= self.fallspeed
         else:
-            self.speed[1] = self.fallSpeed
+            self.speed[1] = self.maxfallspeed
         if self.blockedTop == True:
             self.squishTop()
 
@@ -1298,10 +1314,10 @@ class Player(Object):
             self.mouthed = None
             time.sleep(1)
             self.speed[1] = -15
-            self.fallSpeed = 7
+            self.maxfallspeed = 7
 
     def deathfall(self, cam):
-        self.fallSpeed = 7
+        self.maxfallspeed = 7
         cam.lockMove = True
         if self.location[1] > cam.ypos+256:
             cam.lockMove = False
@@ -1342,11 +1358,11 @@ class Enemy(Object):
         self.submergedCheck()
         #pygame.draw.rect(self.renderLayer, (0,255,0), (self.location[0]+self.spriteSize[0]/2, self.location[1]+self.spriteSize[1],1,1))
         if self.attack == True or self.floating == True or self.submerged > 2:
-            self.fallSpeed = 2
+            self.maxfallspeed = 2
         elif self.climb == True:
-            self.fallSpeed = 0
+            self.maxfallspeed = 0
         else:
-            self.fallSpeed = 7
+            self.maxfallspeed = 7
         if self.blockedTop == True:
             self.speed[1] = 2
         if self.grounded == False and self.interrupted == False:
@@ -1366,10 +1382,10 @@ class Enemy(Object):
         self.location[1] = 36
 
     def physicsSim(self):
-        if self.speed[1] < self.fallSpeed:
-            self.speed[1] += 1
+        if self.speed[1] < self.maxfallspeed:
+            self.speed[1] += self.fallspeed
         else:
-            self.speed[1] = self.fallSpeed
+            self.speed[1] = self.maxfallspeed
 
 
     def interruptTest(self):
