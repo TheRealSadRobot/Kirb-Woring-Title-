@@ -5,31 +5,28 @@ def beamAttack(obj):
     if obj.firePressed == False:
         obj.firePressed = True
         obj.actTimer = 25
+        obj.playAnimationOnce("Prebeam","Beam")
         obj.fallspeed = 0
-        if obj.keys[pygame.K_UP]:
-            spout = gameLib.Attack(0,"Star","None",
-                                   obj.location[0],obj.location[1],
-                                   obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[0,-8,1],obj,"parent",
-                                   "submergedCheck")
-        elif obj.keys[pygame.K_DOWN]:
-            spout = gameLib.Attack(0,"Star","None",
-                                   obj.location[0],obj.location[1],
-                                   obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[0,8,1],obj,"parent",
-                                   "submergedCheck")
-        elif obj.dir == "left":
-            spout = gameLib.Attack(0,"Star","None",
-                                   obj.location[0],obj.location[1],
-                                   obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[-8,0,1],obj,"parent",
-                                   "submergedCheck")
+        num = 8
+        anglemod = 0
+        if obj.dir == "left":
+            while num <= 40:
+                beam = gameLib.Attack(0,"Beam","None",
+                                       obj.location[0],obj.location[1],
+                                       obj.objlist,obj.renderLayer,"Normal",
+                                       obj.currentLevel,25,[-8-num,8+num,1,obj.location,-90-anglemod],obj,"circle",
+                                       None)
+                anglemod += 0.125
+                num+=8
         else:
-            spout = gameLib.Attack(0,"Star","None",
-                                   obj.location[0],obj.location[1],
-                                   obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[8,0,1],obj,"parent",
-                                   "submergedCheck")
+            while num <= 40:
+                beam = gameLib.Attack(0,"Beam","None",
+                                       obj.location[0],obj.location[1],
+                                       obj.objlist,obj.renderLayer,"Normal",
+                                       obj.currentLevel,25,[8+num,8+num,1,obj.location,-90-anglemod],obj,"circle",
+                                       None)
+                anglemod += 0.125
+                num+=8
 
 def WaterSpit(obj):
     if obj.firePressed == False:

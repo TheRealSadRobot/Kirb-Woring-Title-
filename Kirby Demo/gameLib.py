@@ -48,15 +48,8 @@ class Object:
         self.itr = 0
         self.currentLevel = Level
         #current sprite
-        if type(self).__name__== "Ball":
-            self.animFrame = "Roll1"
-            self.animation = "Idle"
-        elif type(self).__name__ == "Attack":
-            self.animFrame = "Shoot1"
-            self.animation = "Shoot"
-        else:
-            self.animFrame = "Idle1"
-            self.animation = "Idle"
+        self.animFrame = Datafile["Character"]["Animations"][self.charName][list(Datafile["Character"]["Animations"][self.charName].keys())[0]][0][0]
+        self.animation = list(Datafile["Character"]["Animations"][self.charName].keys())[0]
         self.animFrameNumber = 0
         self.animType = "Loop"
         self.animBacklog = "Fall"
@@ -337,8 +330,10 @@ class Object:
         self.sprite = pygame.transform.scale(self.sprite,(self.spriteSize[0],self.spriteSize[1]))
         ##print(self.sprite.get_size())
         self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],self.spriteSize[0],self.spriteSize[1]))
+        #if the length is 3, the sprite needs rotated
         if len(Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber]) == 3:
              self.sprite.blit(pygame.transform.rotate(self.sprite,Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][2]),(0,0))
+        #if the length is 4, the sprite needs flipped
         elif len(Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber]) == 4:
              self.sprite.blit(pygame.transform.flip(pygame.transform.rotate(self.sprite,Datafile["Character"]["Animations"][self.charName][self.animation][self.animFrameNumber][2]),True,False),(0,0))
         self.sprite.blit(self.pallateApply(self.pallate, self.sprite),(0,0))
@@ -350,6 +345,39 @@ class Object:
                                   (0,0,self.spriteSize[0],self.spriteSize[1]))
         else:
             self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (int(self.location[0]-self.camera.xpos-(self.spriteSize[0]/2)),int(self.location[1]-self.camera.ypos-(self.spriteSize[1]/2))), (0,0,self.spriteSize[0],self.spriteSize[1]))
+
+    def hatRender(self):
+        try:
+            if self.ability != "copy":
+                #pull relevant hat sprite
+                anim = "Normal"
+                frameno = 0
+                hatframe = Datafile["Hats"]["Animations"][self.ability][anim][frameno][0]
+                spritesize = Datafile["Hats"]["Size"][hatframe]
+                coordinates = Datafile["Hats"]["Coordinates"][hatframe]
+                #render on top of normal sprite
+                hatsprite = pygame.Surface((spritesize[0],spritesize[1]))
+                hatsprite.blit(Sheet, (0,0),(coordinates[0],coordinates[1],spritesize[0],spritesize[1]))
+                #if the length is 3, the sprite needs rotated
+                if len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 3:
+                     hatsprite.blit(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),(0,0))
+                #if the length is 4, the sprite needs flipped
+                elif len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 4:
+                     hatsprite.blit(pygame.transform.flip(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),True,False),(0,0))
+                hatsprite.set_colorkey((0,255,62))
+                if self.dir == "right":
+                    self.renderLayer.blit(hatsprite,
+                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
+                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
+                                          (0,0,spritesize[0],spritesize[1]))
+                else:
+                    self.renderLayer.blit(pygame.transform.flip(hatsprite,1,0),
+                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
+                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
+                                          (0,0,spritesize[0],spritesize[1]))
+
+        except Exception as e:
+            raise e
         
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -1074,6 +1102,7 @@ class Player(Object):
 
     def update(self,cam):
         #self.walk()
+        self.pallate = Datafile["Character"]["Pallates"][self.charName][self.ability]
         #self.speed = [0,0]
         if self.actTimer > 0:
             self.actTimer -= 1
@@ -1102,6 +1131,7 @@ class Player(Object):
         self.animate()
         self.drawPoints()
         self.render()
+        self.hatRender()
         self.wasBlockedLeft = self.blockedLeft
         self.wasBlockedRight = self.blockedRight
         self.wasBlockedTop = self.blockedTop
@@ -1151,7 +1181,7 @@ class Player(Object):
         else:
             self.fallspeed = 1
             self.maxfallspeed = 7
-        
+        print(self.actTimer)
         if self.actTimer == 0:
             if self.keys[pygame.K_d]:
                 if self.submerged > 2:
@@ -1443,6 +1473,7 @@ class Attack(Object):
         self.alligience = alligience
         self.mode = mode
         self.destroyConditions = destroyConditions
+        self.angle = 0
         if self.mode == "line":
             self.xspeed = moveinfo[0]
             self.yspeed = moveinfo[1]
@@ -1450,12 +1481,12 @@ class Attack(Object):
             self.radx = moveinfo[0]
             self.rady = moveinfo[1]
             self.center = moveinfo[3]
+            self.angle = moveinfo[4]
         elif self.mode == "parent":
             self.offsetx = moveinfo[0]
             self.offsety = moveinfo[1]
         self.movespeed = moveinfo[2]
         #self.persistant = persistant
-        self.angle = 0
     def update(self,mainCam):
         self.camera = mainCam
         #Object.update(self,mainCam)
