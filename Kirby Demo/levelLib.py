@@ -82,10 +82,12 @@ class Level:
         for color in range(len(pallate)):
             #replace with corrosponding pallate color
             #print(pallate)
+            #print(color,pallate[color],Datafile["Pallates"]["Default"][color])
             colorSprite.fill(pallate[color])
             sprite.set_colorkey(Datafile["Pallates"]["Default"][color])
             colorSprite.blit(sprite, (0,0))
             sprite.blit(colorSprite, (0,0))
+        sprite.set_colorkey([0,255,62])
         return sprite
     def getName(self):
         return self.__name

@@ -170,8 +170,8 @@ def popListbox():
         for item in range(len(Datafile["Tilekey"])-1):
             Tilebox.insert(item, Datafile["Tilekey"][f"{item+1}"])
     elif toolvar.get() == 2:
-        for item in range(len(Datafile["Themekey"])):
-            Tilebox.insert(item, Datafile["Themekey"][f"{item}"])
+        for item in range(len(Datafile["Pallatekey"])):
+            Tilebox.insert(item, Datafile["Pallatekey"][f"{item}"])
 
 def save(level):
     writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
@@ -208,7 +208,7 @@ def themeBlocks(level,camera):
     #if the tile is not the max value on the Thememap:
         #add one to it
         #print(row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)])
-        if row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] < len(Datafile["Themekey"]):
+        if row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] < len(Datafile["Pallatekey"]):
             row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
     #else:
         else:
