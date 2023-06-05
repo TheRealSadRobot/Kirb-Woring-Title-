@@ -75,6 +75,7 @@ class Object:
         self.objlist = arrayDestination
         self.objlist.append(self)
         self.getpoints()
+        #prepares the list for network communications
         self.sendList = [self.crouching]
         if self.mouthed != None:
             self.sendList.append(self.objlist.index(self.mouthed))
@@ -90,10 +91,12 @@ class Object:
         self.sendList.append(self.lastkeys)
         self.sendList.append(self.ID)
         #self.sendList = [self.crouching, self.objlist.index(self.mouthed),self.mouthfull,self.objlist.index(self.inmouth),self.speed,self.location,self.lastkeys]
-
+        
+    #removes object from list so that garbage collector will take it out
     def delete(self):
         self.objlist.remove(self)
         
+    #checks if a point is under the collision box of a fluid block
     def checkIfPointSubmerged(self, point):
         for obj in self.collide:
             if isinstance(obj,fluid):
@@ -101,6 +104,8 @@ class Object:
                     if point[0] < obj.right[0] and point[0] > obj.left[0]:
                         return True
         return False
+    
+    #same as above, but for the whole object
     def submergedCheck(self):
         self.submerged = 0
         for obj in self.collide:
@@ -117,6 +122,8 @@ class Object:
                 return True
             else:
                 return False
+
+    #test if two objects are colliding
     def collideWithObj(self):
         self.collide = []
         for obj in self.objlist:
@@ -140,6 +147,7 @@ class Object:
                 except:
                     pass
 
+    #test incoming network signals to ensure that all gamestates have the same movements
     def checks(self,data):
         #print(f"{self.charName}{self.pallateName} repairlog")
         if data[0] != self.crouching:
@@ -196,6 +204,7 @@ class Object:
             #print("Key Stroke Repair")
         #print("key test passed")
 
+    #calculate the top,bottom,left,and right
     def getpoints(self):
         """self.top = (int(self.location[0]+self.spriteSize[0]/2), int(self.location[1]))
         self.right = (int(self.location[0]+self.spriteSize[0]), int(self.location[1]+self.spriteSize[1]/2))
@@ -573,8 +582,10 @@ class Object:
     def distanceToNotCollide(self,point,searchAxis,searchDirection):
         try:
             itr = 0
-            if point[0] >= self.currentLevel.maxiX*8 or point[1] >= self.currentLevel.maxiY*8:
-                return 0
+            if point[0] >= self.currentLevel.maxiX*8:
+                return -(point[0]-self.currentLevel.maxiX*8)-1
+            elif point[1] >= self.currentLevel.maxiY*8:
+                return -(point[1]-self.currentLevel.maxiY*8)-1
             else:
                 if searchAxis == 0:
                     while True:
@@ -661,6 +672,8 @@ class Object:
             #check all four points on character.
             #find what tile type they are on
             tilecountx = int(point[0]//8)
+            if point[0] <= 0 or point[1] <= 0:
+                return True
             ##print(f"{self.charName} {self.pallateName} has it's x test")
             tilecounty = int(point[1]//8)
             point = (int(point[0]),int(point[1]))
@@ -702,7 +715,8 @@ class Object:
         except Exception as e:
             #print(self.right[0],self.currentLevel.maxiX*8)
             #raise e
-            print(e)
+            #print(e)
+            #print(self.location[0])
             return True
             ##print(f"{self.charName} {self.pallateName} is reigestering collision")
                 
@@ -1110,6 +1124,7 @@ class Player(Object):
         self.camera = cam
         self.ladderCollide = 0
         self.sendPop()
+        #print(self.location)
         #print(self.blockedTop,self.blockedLeft,self.blockedRight,self.grounded)
         #print(self.bottom)
         #print(self.getTileType(self.top), self.getTileType(self.left), self.getTileType(self.right), self.getTileType(self.left))
@@ -1181,7 +1196,7 @@ class Player(Object):
         else:
             self.fallspeed = 1
             self.maxfallspeed = 7
-        print(self.actTimer)
+        #print(self.actTimer)
         if self.actTimer == 0:
             if self.keys[pygame.K_d]:
                 if self.submerged > 2:
@@ -1190,7 +1205,7 @@ class Player(Object):
                             try:
                                 getattr(abilityLib,f"{self.ability}Attack")(self)
                             except Exception as e:
-                                print(e)
+                                #print(e)
                                 abilityLib.Copy(self)
                                 self.climb = False
                         else:
@@ -1199,7 +1214,7 @@ class Player(Object):
                     try:
                         getattr(abilityLib,f"{self.ability}Attack")(self)
                     except Exception as e:
-                        print(e)
+                        #print(e)
                         abilityLib.Copy(self)
                         self.climb = False
                 self.climb = False
@@ -1215,7 +1230,7 @@ class Player(Object):
                     elif self.submerged > 2:
                         self.swimUp()
             if self.keys[pygame.K_z]:
-                print(self.speed[1])
+                #print(self.speed[1])
                 print(self.ladderCollide)
             if self.keys[pygame.K_DOWN]:
                 if self.submerged > 2:
@@ -1733,10 +1748,71 @@ class Ball(Object):
         except:
             pass
 
+class trigger:
+    def __init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level):
+        self.ID = ID
+        self.location = [xlocation, ylocation]
+        self.sizex = sizex
+        self.sizey = sizey
+        self.currentLevel = Level
+        #add to array of all objects
+        self.objlist = arrayDestination
+        self.objlist.append(self)
+        #self.getpoints()
+        self.renderLayer = renderLayer
+        self.sendList = [self.location]
+        self.sendList.append(self.ID)
+        self.collisions = []
+            
+    def abilitychange(self,char,out):
+        char.ability = out
+        
+    def lvlAlterRange(self,burner,lvlrange):
+        #lvlrange should be list with format [xstart,ystart,xsize,ysize,factor to change, value to place in factor]
+        for num in range(lvlrange[3]):
+            data = getattr(self.currentLevel,lvlrange[4])
+            for num2 in range(lvlrange[2]):
+                value=num+lvlrange[1]
+                data[value][num2+lvlrange[0]] = lvlrange[5]
+        
+class enterTrigger(trigger):
+    def __init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level, targetType, result, value):
+        trigger.__init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level)
+        self.targetType = targetType
+        self.result = result
+        self.value = value
+        
+    def getpoints(self):
+        self.top = (int(self.location[0]+self.sizex/2), int(self.location[1]))
+        self.right = (int(self.location[0]+self.sizex), int(self.location[1]+self.sizey/2))
+        self.left = (int(self.location[0]), int(self.location[1]+self.sizey/2))
+        self.bottom = (int(self.location[0]+self.sizex/2), int(self.location[1]+self.sizey))
+        pygame.draw.rect(self.renderLayer,(255,0,0),(self.left[0]-self.camera.xpos,self.top[1]-self.camera.ypos,self.sizex,self.sizey))
+        
+    def update(self,mainCam):
+        self.collisions = []
+        self.camera = mainCam
+        self.getpoints()
+        for obj in self.objlist:
+            if obj != self and type(obj).__name__:
+                if (obj.left > self.left and self.right > obj.right) or (obj.left < self.left and self.right < obj.right):
+                    if obj.top > self.top or self.bottom > obj.bottom:
+                        self.collisions.append(obj)
+                        
+        for obj in self.collisions:
+            if type(self.result) == list:
+                for entry in range(len(self.result)):
+                    func = getattr(self,self.result[entry])
+                    if type(self.value) == list:
+                        func(obj,self.value[entry])
+                    else:
+                        func(obj,self.value)
+            else:
+                func = getattr(self,self.result)
+                func(obj,self.value)
 class fluid():
     def __init__(self, ID,charName, xlocation, ylocation, sizex, sizey, arrayDestination,renderLayer,pallate,Level):
         self.ID = ID
-        self.lastkeys = pygame.key.get_pressed()
         self.charName = charName
         #behavior type
         self.location = [xlocation, ylocation]

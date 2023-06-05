@@ -69,7 +69,7 @@ Datafile = json.load(open("Support.json"))
 #def main
 def main():
     #level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
-    level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
+    level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
     mainCam = camLib.Camera(level,None)
     toolbarMake(level)
     #while True
@@ -175,7 +175,13 @@ def popListbox():
 
 def save(level):
     writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
-    writeThis = {"Layout":level.collisionData,"Tileset":level.tileset,"FlipMap":level.flipmap,"Objects":level.file["Objects"],"BG":level.file["BG"],"Music":level.file["Music"]}
+    writeThis = {"Layout":level.collisionData,
+                 "Tileset":level.tileset,
+                 "FlipMap":level.flipmap,
+                 "Objects":level.file["Objects"],
+                 "BG":level.file["BG"],
+                 "Music":level.file["Music"],
+                 "animList":level.animlist}
     json.dump(writeThis,writeTo)
     print("Your Game--Saved!")
 
