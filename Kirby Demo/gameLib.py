@@ -3,125 +3,57 @@ import pygame
 import time
 import math
 import abilityLib
+import levelLib
 import HostLib
 #spritesheet
 Sheet = pygame.image.load("Kirbo Sprites.png")
 #metadata for spritesheet
 Datafile = json.load(open("Support.json"))
+#Object: core for all entities
+    #Characters
+        #NPCs
+        #Players
+        #Enemies
+    #Fluids
+    #Triggers
+    #Doors
 
 class Object:
-    def __init__(self, ID, charName,ability, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level):
+    def __init__(self, ID, charName, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level):
         self.ID = ID
-        self.lastkeys = pygame.key.get_pressed()
         self.charName = charName
         #behavior type
-        self.alive = True
-        self.inhaled = False
-        self.mouthed = None
-        self.inmouth = []
-        self.inhalingnum = 0
-        self.speedbuffer = [0,0]
-        self.speed = [0,0]
-        self.ability = ability
-        self.location =[xlocation, ylocation]
-        self.dir = "right"
-        self.pallateName = pallate
-        self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.maxfallspeed = 3
-        self.fallspeed = 1
-        self.fallingTime = 0
-        self.walkSpeed = 1
-        self.runSpeed = 2
-        self.swimSpeed = 1
-        self.jumpHeight = 15
-        self.sizex = 16
-        self.sizey = 16
-        self.actTimer = 0
-        self.grounded = False
-        self.blockedTop = False
-        self.blockedRight = False
-        self.blockedLeft = False
-        self.wasGrounded = False
-        self.wasBlockedTop = False
-        self.wasBlockedRight = False
-        self.wasBlockedLeft = False
         self.itr = 0
         self.currentLevel = Level
+        self.dir = "right"
+        self.sizex = 16
+        self.sizey = 16
         #current sprite
-        self.animFrame = Datafile["Character"]["Animations"][self.charName][list(Datafile["Character"]["Animations"][self.charName].keys())[0]][0][0]
-        self.animation = list(Datafile["Character"]["Animations"][self.charName].keys())[0]
-        self.animFrameNumber = 0
-        self.animType = "Loop"
-        self.animBacklog = "Fall"
-        self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
-        self.animItr = 0
-        self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
-        self.StunItr = 0
-        self.blockedTop = False
-        self.floating = False
-        self.flap = False
-        self.crouching = False
-        self.climb = False
-        self.ladderCollide = 0
-        self.submerged = 0
-        self.slideItr = 0
-        self.walking = False
-        self.attack = False
-        self.firePressed = False
-        self.mouthfull = 0
+        try:
+            self.animFrame = Datafile["Character"]["Animations"][self.charName][list(Datafile["Character"]["Animations"][self.charName].keys())[0]][0][0]
+            self.animation = list(Datafile["Character"]["Animations"][self.charName].keys())[0]
+            self.animFrameNumber = 0
+            self.animType = "Loop"
+            self.animBacklog = "Fall"
+            self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
+            self.animItr = 0
+            self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
+        except:
+            pass
+        try:
+            self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
+        except:
+            pass
         self.collide = []
         self.renderLayer = renderLayer
         #add to array of all objects
         self.objlist = arrayDestination
         self.objlist.append(self)
+        self.location = [xlocation,ylocation]
         self.getpoints()
-        #prepares the list for network communications
-        self.sendList = [self.crouching]
-        if self.mouthed != None:
-            self.sendList.append(self.objlist.index(self.mouthed))
-        else:
-            self.sendList.append(None)
-        self.sendList.append(self.mouthfull)
-        if self.inmouth != []:
-            self.sendList.append(self.objlist.index(self.inmouth))
-        else:
-            self.sendList.append([])
-        self.sendList.append(self.speed)
-        self.sendList.append(self.location)
-        self.sendList.append(self.lastkeys)
-        self.sendList.append(self.ID)
-        #self.sendList = [self.crouching, self.objlist.index(self.mouthed),self.mouthfull,self.objlist.index(self.inmouth),self.speed,self.location,self.lastkeys]
-        
     #removes object from list so that garbage collector will take it out
     def delete(self):
         self.objlist.remove(self)
-        
-    #checks if a point is under the collision box of a fluid block
-    def checkIfPointSubmerged(self, point):
-        for obj in self.collide:
-            if isinstance(obj,fluid):
-                if point[1] > obj.top[1] and point[1] < obj.bottom[1]:
-                    if point[0] < obj.right[0] and point[0] > obj.left[0]:
-                        return True
-        return False
-    
-    #same as above, but for the whole object
-    def submergedCheck(self):
-        self.submerged = 0
-        for obj in self.collide:
-            if isinstance(obj,fluid):
-                if self.top[1] > obj.top[1]:
-                   self.submerged += 1 
-                if self.bottom[1] < obj.bottom[1]:
-                   self.submerged += 1
-                if self.left[0] > obj.left[0]:
-                   self.submerged += 1
-                if self.right[0] < obj.right[0]:
-                   self.submerged += 1
-            if self.submerged > 3:
-                return True
-            else:
-                return False
 
     #test if two objects are colliding
     def collideWithObj(self):
@@ -253,19 +185,6 @@ class Object:
             #time.sleep(0.01)
         except:
             pass
-    
-    def squishTop(self):
-        if self.floating == False and self.mouthfull == False and self.speed[1] < 0:
-            if self.actTimer == 0:
-                #print("squish here")
-                self.setCollideBoxSize(8,8)
-                self.getpoints()
-                self.location[1] += self.distanceToCollide(self.top,1,-1)
-                self.getpoints()
-                self.playAnimation("Crouch")
-                self.actTimer = 10
-                #print("Hitbox Was Squished")
-
 
     def setCollideBoxSize(self,xSize,ySize):
         self.sizex = xSize
@@ -354,50 +273,32 @@ class Object:
                                   (0,0,self.spriteSize[0],self.spriteSize[1]))
         else:
             self.renderLayer.blit(pygame.transform.flip(self.sprite,1,0), (int(self.location[0]-self.camera.xpos-(self.spriteSize[0]/2)),int(self.location[1]-self.camera.ypos-(self.spriteSize[1]/2))), (0,0,self.spriteSize[0],self.spriteSize[1]))
-
-    def hatRender(self):
-        try:
-            if self.ability != "copy":
-                #pull relevant hat sprite
-                anim = "Normal"
-                frameno = 0
-                hatframe = Datafile["Hats"]["Animations"][self.ability][anim][frameno][0]
-                spritesize = Datafile["Hats"]["Size"][hatframe]
-                coordinates = Datafile["Hats"]["Coordinates"][hatframe]
-                #render on top of normal sprite
-                hatsprite = pygame.Surface((spritesize[0],spritesize[1]))
-                hatsprite.blit(Sheet, (0,0),(coordinates[0],coordinates[1],spritesize[0],spritesize[1]))
-                #if the length is 3, the sprite needs rotated
-                if len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 3:
-                     hatsprite.blit(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),(0,0))
-                #if the length is 4, the sprite needs flipped
-                elif len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 4:
-                     hatsprite.blit(pygame.transform.flip(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),True,False),(0,0))
-                hatsprite.set_colorkey((0,255,62))
-                if self.dir == "right":
-                    self.renderLayer.blit(hatsprite,
-                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
-                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
-                                          (0,0,spritesize[0],spritesize[1]))
-                else:
-                    self.renderLayer.blit(pygame.transform.flip(hatsprite,1,0),
-                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
-                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
-                                          (0,0,spritesize[0],spritesize[1]))
-
-        except Exception as e:
-            raise e
         
     def pallateApply(self, pallate, sprite):
-        #for each color in sprite:
+        #for testing
+        #test = pygame.display.set_mode((700,350))
+        colorSprite = pygame.Surface(sprite.get_size())
         for color in range(len(pallate)):
-            colorSprite = pygame.Surface(sprite.get_size())
-            #replace with corrosponding pallate color
-            colorSprite.fill(pallate[color])
+            """#start of test
+            test.blit(pygame.transform.scale(sprite,(350,350)),(0,0))
+            test.blit(pygame.transform.scale(colorSprite,(350,350)),(350,0))
+            pygame.display.flip()
+            test.fill((0,255,68))
+            time.sleep(1)
+            #end of test"""
             sprite.set_colorkey(Datafile["Character"]["Pallates"][self.charName]["Normal"][color])
+            colorSprite.fill(pallate[color])
             colorSprite.blit(sprite, (0,0))
             sprite.blit(colorSprite, (0,0))
-        return sprite
+            #print(color)#Datafile["Character"]["Pallates"][self.charName]["Normal"][color])
+        """#start of test
+        test.blit(pygame.transform.scale(sprite,(350,350)),(0,0))
+        test.blit(pygame.transform.scale(colorSprite,(350,350)),(350,0))
+        pygame.display.flip()
+        test.fill((0,255,68))
+        time.sleep(1)
+        #end of test"""
+        return colorSprite
 
     def playAnimation(self, animationName):
         if animationName != self.animation:
@@ -1102,16 +1003,148 @@ class Object:
         except:
             print("dip")
             return 0
+            
+    def submergedCheck(self):
+        self.submerged = 0
+        for obj in self.collide:
+            if isinstance(obj,fluid):
+                if self.top[1] > obj.top[1]:
+                   self.submerged += 1 
+                if self.bottom[1] < obj.bottom[1]:
+                   self.submerged += 1
+                if self.left[0] > obj.left[0]:
+                   self.submerged += 1
+                if self.right[0] < obj.right[0]:
+                   self.submerged += 1
+            if self.submerged > 3:
+                return True
+            else:
+                return False
 
+class Character(Object):
+    def __init__(self, ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level, Uniques):
+        Object.__init__(self, ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level)
+        self.ability = Uniques[0]
+        self.lastkeys = pygame.key.get_pressed()
+        self.alive = True
+        self.inhaled = False
+        self.mouthed = None
+        self.inmouth = []
+        self.inhalingnum = 0
+        self.speedbuffer = [0,0]
+        self.speed = [0,0]
+        self.pallateName = pallate
+        self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
+        self.maxfallspeed = 3
+        self.fallspeed = 1
+        self.fallingTime = 0
+        self.walkSpeed = 1
+        self.runSpeed = 2
+        self.swimSpeed = 1
+        self.jumpHeight = 15
+        self.actTimer = 0
+        self.grounded = False
+        self.blockedTop = False
+        self.blockedRight = False
+        self.blockedLeft = False
+        self.wasGrounded = False
+        self.wasBlockedTop = False
+        self.wasBlockedRight = False
+        self.wasBlockedLeft = False
+        self.StunItr = 0
+        self.blockedTop = False
+        self.floating = False
+        self.flap = False
+        self.crouching = False
+        self.climb = False
+        self.ladderCollide = 0
+        self.submerged = 0
+        self.slideItr = 0
+        self.walking = False
+        self.attack = False
+        self.firePressed = False
+        self.mouthfull = 0
+        self.multiplayerMode = Uniques[1]
+        #prepares the list for network communications
+        self.sendList = [self.crouching]
+        if self.mouthed != None:
+            self.sendList.append(self.objlist.index(self.mouthed))
+        else:
+            self.sendList.append(None)
+        self.sendList.append(self.mouthfull)
+        if self.inmouth != []:
+            self.sendList.append(self.objlist.index(self.inmouth))
+        else:
+            self.sendList.append([])
+        self.sendList.append(self.speed)
+        self.sendList.append(self.location)
+        self.sendList.append(self.lastkeys)
+        self.sendList.append(self.ID)
+        #self.sendList = [self.crouching, self.objlist.index(self.mouthed),self.mouthfull,self.objlist.index(self.inmouth),self.speed,self.location,self.lastkeys]
+        
+        #checks if a point is under the collision box of a fluid block
 
-class Player(Object):
-    def __init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,multiplayerMode):
-        Object.__init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+    def hatRender(self):
+        try:
+            if self.ability != "copy":
+                #pull relevant hat sprite
+                anim = "Normal"
+                frameno = 0
+                hatframe = Datafile["Hats"]["Animations"][self.ability][anim][frameno][0]
+                spritesize = Datafile["Hats"]["Size"][hatframe]
+                coordinates = Datafile["Hats"]["Coordinates"][hatframe]
+                #render on top of normal sprite
+                hatsprite = pygame.Surface((spritesize[0],spritesize[1]))
+                hatsprite.blit(Sheet, (0,0),(coordinates[0],coordinates[1],spritesize[0],spritesize[1]))
+                #if the length is 3, the sprite needs rotated
+                if len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 3:
+                     hatsprite.blit(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),(0,0))
+                #if the length is 4, the sprite needs flipped
+                elif len(Datafile["Hats"]["Animations"][self.ability][anim][frameno]) == 4:
+                     hatsprite.blit(pygame.transform.flip(pygame.transform.rotate(hatsprite,Datafile["Hats"]["Animations"][self.ability][anim][frameno][2]),True,False),(0,0))
+                hatsprite.set_colorkey((0,255,62))
+                if self.dir == "right":
+                    self.renderLayer.blit(hatsprite,
+                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
+                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
+                                          (0,0,spritesize[0],spritesize[1]))
+                else:
+                    self.renderLayer.blit(pygame.transform.flip(hatsprite,1,0),
+                                          (int(self.location[0]-self.camera.xpos-spritesize[0]/2),
+                                          int(self.location[1]-self.camera.ypos-(spritesize[1]*3/4)-self.spriteSize[1]/2)),
+                                          (0,0,spritesize[0],spritesize[1]))
+
+        except Exception as e:
+            raise e
+
+    def checkIfPointSubmerged(self, point):
+        for obj in self.collide:
+            if isinstance(obj,fluid):
+                if point[1] > obj.top[1] and point[1] < obj.bottom[1]:
+                    if point[0] < obj.right[0] and point[0] > obj.left[0]:
+                        return True
+        return False
+    
+    #same as above, but for the whole object
+    
+    def squishTop(self):
+        if self.floating == False and self.mouthfull == False and self.speed[1] < 0:
+            if self.actTimer == 0:
+                #print("squish here")
+                self.setCollideBoxSize(8,8)
+                self.getpoints()
+                self.location[1] += self.distanceToCollide(self.top,1,-1)
+                self.getpoints()
+                self.playAnimation("Crouch")
+                self.actTimer = 10
+                #print("Hitbox Was Squished")
+        
+class Player(Character):
+    def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
+        Character.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques)
         self.alive = True
         self.attack = False
-        self.attack = False
         self.startInhale = False
-        self.multiplayerMode = multiplayerMode
         self.respawnpoint = (xlocation,ylocation)
 
     def update(self,cam):
@@ -1224,6 +1257,10 @@ class Player(Object):
             #print(self.ladderCollide)
             if self.keys[pygame.K_UP]:
                 #print(self.ladderCollide,self.attack,self.mouthfull)
+                for obj in self.collide:
+                    if type(obj).__name__ == "door":
+                        print("uppity")
+                        obj.interact(self)
                 if self.attack == False and self.mouthfull == 0:
                     if self.ladderCollide > 0:
                         self.ladderUp()
@@ -1376,17 +1413,18 @@ class Player(Object):
         self.location[1] = self.respawnpoint[1]
         cam.refocus(self.location)
 
-class NPC(Object):
-    pass
+class NPC(Character):
+    def __init__(self, ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level, Uniques):
+        super().__init__(ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level, Uniques)
     """def update(self,cam):
         self.camera = cam
         self.render()"""
 #class Item(Object):
 #class Block(Object):
 
-class Enemy(Object):
-    def __init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level):
-        Object.__init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+class Enemy(Character):
+    def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
+        Character.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level, Uniques)
         self.behaviorItr = 0
         self.interrupted = False
         self.behaviorTimer = 0
@@ -1417,7 +1455,7 @@ class Enemy(Object):
             #print(self.fallingTime)
             self.fallingTime = 0
             self.speed[1] = 0
-        Object.update(self,cam)
+        Character.update(self,cam)
         ##print(self.location)
 
     def Kill(self):
@@ -1479,15 +1517,18 @@ class Enemy(Object):
             self.playAnimationOnce("Roll","Fall")
 
 class Attack(Object):
-    def __init__(self,ID,charName,ability,
+    def __init__(self,ID,charName,
                  xlocation,ylocation,arrayDestination,
-                 renderLayer,pallate,Level,lifespan,
-                 moveinfo,alligience,mode,destroyConditions = None):
-        Object.__init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
-        self.lifespan = lifespan
-        self.alligience = alligience
-        self.mode = mode
-        self.destroyConditions = destroyConditions
+                 renderLayer,pallate,Level,Uniques):
+        Object.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
+        self.lifespan = Uniques[0]
+        moveinfo = Uniques[1]
+        self.alligience = Uniques[2]
+        self.mode = Uniques[3]
+        try:
+            self.destroyConditions = Uniques[4]
+        except:
+            self.destroyConditions = None
         self.angle = 0
         if self.mode == "line":
             self.xspeed = moveinfo[0]
@@ -1556,11 +1597,102 @@ class Attack(Object):
     def moveTo(self,x,y):
         self.location = (x,y)
 
+class door(Object):
+    def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
+        Object.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level)
+        self.doortype = Uniques[0]
+        self.sizex = Uniques[2][0]
+        self.sizey = Uniques[2][1]
+        self.dest = Uniques[1]
+        self.func = Uniques[3]
+    def update(self,mainCam):
+        self.camera = mainCam
+        self.getpoints()
+        self.render()
+        self.drawPoints()
+    def interact(self,trigger):
+        if self.func=="load":
+            print(trigger.objlist)
+            todelete = []
+            for obj in trigger.objlist:
+                if obj != trigger:
+                    todelete.append(obj)
+            for obj in todelete:
+                obj.delete()
+            print(trigger.objlist)
+            trigger.currentLevel.__init__("Castle", "TestRoom1",trigger.objlist,trigger.renderLayer)
+            trigger.currentLevel.loadLevel(trigger.renderLayer, trigger.camera)
+            trigger.location[0] = self.dest[0]
+            trigger.location[1] = self.dest[1]
+        elif self.doortype=="warp":
+            trigger.location[0] = self.dest[0]
+            trigger.location[1] = self.dest[1]
+    def getpoints(self):
+        self.top = (int(self.location[0]+self.sizex/2), int(self.location[1]))
+        self.bottom = (int(self.location[0]+self.sizex/2), int(self.location[1]+self.sizey)-1)
+        self.right = (self.location[0]+self.sizex-1, self.location[1]+int(self.sizey/2)-1)
+        self.left = (self.location[0], self.location[1]+int(self.sizey/2)-1)
+        
+    def render(self):
+        self.sprite = pygame.transform.scale(self.sprite,(self.sizex,self.sizey))
+        self.spriteCoordinates = Datafile["Character"]["SpriteCoordinates"]["Door"][self.doortype]
+        #make canvas for l-r edges
+        edgesprite = pygame.Surface((8,self.sizey))
+        #fill sprite with middle
+        counter = 0
+        while counter < self.sizey:
+            counter2 = 0
+            while counter2 < self.sizex:
+                self.sprite.blit(Sheet, (counter2,counter),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1]+8,8,8))
+                counter2 += 8
+            counter += 8
+        #fill edge canvas with l-edge sprite
+        counter = 0
+        while counter < self.sizey:
+            edgesprite.blit(Sheet, (0,counter),(self.spriteCoordinates[0],self.spriteCoordinates[1]+8,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,8))
+        #fill edge canvas with r-edge sprite
+        counter = 0
+        while counter < self.sizey:
+            edgesprite.blit(Sheet, (0,counter),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1]+8,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (self.sizex-8,8))
+        #make canvas for t-b edges
+        edgesprite = pygame.transform.scale(edgesprite, ((self.sizex,8)))
+        #fill edge canvas with t-edge sprite
+        counter = 0
+        while counter < self.sizex:
+            edgesprite.blit(Sheet, (counter,0),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1],8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,0))
+        #fill edge canvas with b-edge sprite
+        counter = 0
+        while counter < self.sizex:
+            edgesprite.blit(Sheet, (counter,0),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1]+16,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,self.sizey-8))
+        #add corners to canvas
+        self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],8,8))
+        self.sprite.blit(Sheet, (self.sizex-8,0),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1],8,8))
+        self.sprite.blit(Sheet, (0,self.sizey-8),(self.spriteCoordinates[0],self.spriteCoordinates[1]+16,8,8))
+        self.sprite.blit(Sheet, (self.sizex-8,self.sizey-8),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1]+16,8,8))
+        #add decorations
+        #place door in level
+        self.sprite = self.pallateApply(self.pallate,self.sprite)
+        self.renderLayer.blit(self.sprite,
+                              (self.location[0]-self.camera.xpos,
+                               self.location[1]-self.camera.ypos),
+                              (0,0,self.sizex,self.sizey))
 
-class Ball(Object):
-    def __init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,multiplayerMode):
-        Object.__init__(self,ID,charName,ability, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level)
-        self.multiplayerMode = multiplayerMode
+class Ball(Character):
+    def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
+        Character.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques)
+        self.multiplayerMode = Uniques[0]
         self.speed = [-1,2]
         self.interrupted = False
         self.hit = False
@@ -1748,22 +1880,9 @@ class Ball(Object):
         except:
             pass
 
-class trigger:
-    def __init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level):
-        self.ID = ID
-        self.location = [xlocation, ylocation]
-        self.sizex = sizex
-        self.sizey = sizey
-        self.currentLevel = Level
-        #add to array of all objects
-        self.objlist = arrayDestination
-        self.objlist.append(self)
-        #self.getpoints()
-        self.renderLayer = renderLayer
-        self.sendList = [self.location]
-        self.sendList.append(self.ID)
-        self.collisions = []
-            
+class trigger(Object):
+    def __init__(self, ID, charName, xlocation, ylocation,arrayDestination, renderLayer,pallate, Level):
+        Object.__init__(self, ID, charName, xlocation, ylocation,arrayDestination, renderLayer,pallate, Level)
     def abilitychange(self,char,out):
         char.ability = out
         
@@ -1776,18 +1895,21 @@ class trigger:
                 data[value][num2+lvlrange[0]] = lvlrange[5]
         
 class enterTrigger(trigger):
-    def __init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level, targetType, result, value):
-        trigger.__init__(self, ID, xlocation, ylocation, sizex, sizey, arrayDestination, renderLayer, Level)
-        self.targetType = targetType
-        self.result = result
-        self.value = value
+    def __init__(self, ID, charName, xlocation, ylocation,arrayDestination, renderLayer, Level, pallates, Uniques):
+        trigger.__init__(self, ID, charName, xlocation, ylocation,arrayDestination, renderLayer, Level, pallates)
+        self.targetType = Uniques[0]
+        self.result = Uniques[1]
+        self.value = Uniques[2]
         
     def getpoints(self):
         self.top = (int(self.location[0]+self.sizex/2), int(self.location[1]))
         self.right = (int(self.location[0]+self.sizex), int(self.location[1]+self.sizey/2))
         self.left = (int(self.location[0]), int(self.location[1]+self.sizey/2))
         self.bottom = (int(self.location[0]+self.sizex/2), int(self.location[1]+self.sizey))
-        pygame.draw.rect(self.renderLayer,(255,0,0),(self.left[0]-self.camera.xpos,self.top[1]-self.camera.ypos,self.sizex,self.sizey))
+        try:
+            pygame.draw.rect(self.renderLayer,(255,0,0),(self.left[0]-self.camera.xpos,self.top[1]-self.camera.ypos,self.sizex,self.sizey))
+        except:
+            pass
         
     def update(self,mainCam):
         self.collisions = []
@@ -1801,26 +1923,25 @@ class enterTrigger(trigger):
                         
         for obj in self.collisions:
             if type(self.result) == list:
-                for entry in range(len(self.result)):
-                    func = getattr(self,self.result[entry])
+                for entry in range(len(self.value)):
+                    func = getattr(self,self.value[entry])
                     if type(self.value) == list:
-                        func(obj,self.value[entry])
+                        func(obj,self.result[entry])
                     else:
                         func(obj,self.value)
             else:
                 func = getattr(self,self.result)
                 func(obj,self.value)
-class fluid():
-    def __init__(self, ID,charName, xlocation, ylocation, sizex, sizey, arrayDestination,renderLayer,pallate,Level):
+class fluid(Object):
+    def __init__(self, ID,charName, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level,Uniques):
         self.ID = ID
         self.charName = charName
         #behavior type
         self.location = [xlocation, ylocation]
         self.dir = "right"
         self.pallateName = pallate
-        self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
-        self.sizex = sizex
-        self.sizey = sizey
+        self.sizex = Uniques[0]
+        self.sizey = Uniques[1]
         self.currentLevel = Level
         self.animFrameNumber = 0
         self.animType = "Loop"
@@ -1838,6 +1959,9 @@ class fluid():
         self.sendList = [self.location]
         self.sendList.append(self.ID)
         
+    def delete(self):
+        Object.delete(self)
+
     def checks(self,data):
         if data[0] != self.location:
             self.crouching = data[0]

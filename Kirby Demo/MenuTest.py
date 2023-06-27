@@ -43,9 +43,10 @@ if num == 1:
 elif num == 2:
     currentLevel = levelLib.Level("Castle", "StarballRing",Objects,charLayer)
 
-Water = gameLib.fluid(1,"Water",100,50,80,400,Objects,backLayer,"Water",currentLevel)
-TriggerTest = gameLib.enterTrigger(1,256,0,256,240,Objects,backLayer,currentLevel,"Player",["abilitychange","lvlAlterRange"],["beam",[32,0,32,30,"tileset","6"]])
-Player = gameLib.Player(0,"Kirby","copy",56,100,Objects,charLayer, "Normal",currentLevel, "HOST")
+Water = gameLib.fluid(1,"Water",100,50,Objects,backLayer,"Water",currentLevel,[80,400])
+Door = gameLib.door(2,"Door",56,168,Objects,charLayer,"White",currentLevel,["Normal",[256,64],[16,32],"load"])
+TriggerTest = gameLib.enterTrigger(1,"Null",256,0,Objects,backLayer,"Null",currentLevel,["Player",["beam",[32,0,32,30,"tileset","6",256,240]],["abilitychange","lvlAlterRange"]])
+Player = gameLib.Player(0,"Kirby",56,100,Objects,charLayer,"Normal",currentLevel,["beam","HOST"])
 #Test = gameLib.Attack("Kirby","None",150,100,Objects,charLayer,"Dee",currentLevel,500,Player,"circle")
 mainCam = camLib.Camera(currentLevel,Player)
 
@@ -53,6 +54,7 @@ mainCam = camLib.Camera(currentLevel,Player)
 #loop
 while True:
     currentLevel.loadLevel(TileLayer, mainCam)
+    #print(currentLevel.name)
     #time.sleep(0.2)
     fpstimer.tick(60)
     #update gameobjects

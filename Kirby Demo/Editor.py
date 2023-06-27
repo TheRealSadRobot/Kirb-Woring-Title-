@@ -12,14 +12,18 @@ Datafile = json.load(open("Support.json"))
 
 #setup
 pygame.init()
+Sheet = pygame.image.load("Kirbo Sprites.png")
 screenscale = 3
 winsizex = 256
 winsizey = 240
 levelObjects = []
+editObjs = {}
 itr = 0
 tiletype = 1
 themetype = 0
 storage = 0
+lclick = False
+rclick = False
 
 fullscreen = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -69,8 +73,13 @@ Datafile = json.load(open("Support.json"))
 #def main
 def main():
     #level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
-    level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
+    level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
     mainCam = camLib.Camera(level,None)
+    for obj in level.file.get("Objects"):
+        #get obj name: level.file.get("Objects").get(obj)[2]
+        #print(level.file.get("Objects").get(obj))
+        editObjs.update({f"{obj}":level.file.get("Objects").get(obj)})
+    #print(editObjs)
     toolbarMake(level)
     #while True
     while True:
@@ -103,6 +112,20 @@ def main():
         mainCam.update()
         #draw the frame
         displayPane.blit(tileLayer, (0,0))
+
+        for obj in editObjs:
+            #get obj name: level.file.get("Objects").get(obj)[2]
+            name = editObjs.get(obj)[2]
+            size = Datafile["Character"]["SpriteSize"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]]
+            charLayer.blit(Sheet,
+                             (editObjs.get(obj)[4]-mainCam.xpos-size[0]/2,
+                             editObjs.get(obj)[5]-mainCam.ypos-size[1]/2),
+                             (Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][0],
+                             Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][1],
+                             size[0],
+                             size[1]))
+        displayPane.blit(charLayer,(0,16))
+
         global toolvar
         global storage
         if storage != toolvar.get():
@@ -114,10 +137,16 @@ def main():
             flipBlocks(level,mainCam)
         elif toolvar.get() == 2:
             themeBlocks(level,mainCam)
+        elif toolvar.get() == 3:
+            objPlace(level,mainCam)
 
         storage = toolvar.get()
+        #render objects in level
+        
         window.blit(pygame.transform.scale(displayPane, (winsizex*screenscale,winsizey*screenscale)), (0,0))
         tileLayer.fill((0,0,0))
+        charLayer.fill((0,255,62))
+        charLayer.set_colorkey((0,255,62))
         toolbar.update()
         
 def toolbarMake(level):
@@ -135,18 +164,22 @@ def toolbarMake(level):
     global FlipImg
     global ThemeImg
     global SaveImg
+    global ObjImg
     global toolvar
     toolvar = tkinter.IntVar()
     popListbox()
     BlockImg = ImageTk.PhotoImage(Image.open("BlockBrushLogo.png"))
     FlipImg = ImageTk.PhotoImage(Image.open("FlipBrushLogo.png"))
     ThemeImg = ImageTk.PhotoImage(Image.open("ThemeBrushLogo.png"))
+    ObjImg = ImageTk.PhotoImage(Image.open("ObjBrushLogo.png"))
     SaveImg = ImageTk.PhotoImage(Image.open("SaveIcon.png"))
     BlockBrush = ttk.Radiobutton(toolbar, text = "Block Brush", image = BlockImg, compound = "left", variable = toolvar, value = 0)
     BlockBrush.pack()
     FlipBrush = ttk.Radiobutton(toolbar, text = "Flip Brush", image = FlipImg, compound = "left", variable = toolvar, value = 1)
     FlipBrush.pack()
-    ttk.Radiobutton(toolbar, text = "Theme Brush", image = ThemeImg, compound = "left", variable = toolvar, value = 2).pack()	
+    ttk.Radiobutton(toolbar, text = "Theme Brush", image = ThemeImg, compound = "left", variable = toolvar, value = 2).pack()
+    ObjBrush = ttk.Radiobutton(toolbar, text = "Place Items", image = ObjImg, compound = "left", variable = toolvar, value = 3)
+    ObjBrush.pack()	
     Tilebox.pack()
     RoomBelowBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddDown, level))
     RoomBelowBtn.pack()
@@ -172,13 +205,17 @@ def popListbox():
     elif toolvar.get() == 2:
         for item in range(len(Datafile["Pallatekey"])):
             Tilebox.insert(item, Datafile["Pallatekey"][f"{item}"])
+    #items are stored in the json file like this: 
+    elif toolvar.get() == 3:
+        for item in range(len(Datafile["Objects"])):
+            Tilebox.insert(item, list(Datafile["Objects"].keys())[item])
 
 def save(level):
     writeTo = open((f"LevelData\{level.getName()}.json"),'r+')
     writeThis = {"Layout":level.collisionData,
                  "Tileset":level.tileset,
                  "FlipMap":level.flipmap,
-                 "Objects":level.file["Objects"],
+                 "Objects":editObjs,
                  "BG":level.file["BG"],
                  "Music":level.file["Music"],
                  "animList":level.animlist}
@@ -191,6 +228,51 @@ def screenAddDown(level):
         level.tileset.append(item)
         level.collisionData.append(item)
         level.flipmap.append(item)
+
+def objPlace(level,camera):
+    global lclick
+    global rclick
+    #todos:
+    #-add some sort of object outline
+    #rightclick to edit/delete
+    #-apply pallates to renderings
+    #-on that note, fluids will likely need their own method to render
+    #-object editing
+    #-dynamic object dictionary naming and ID distribution
+    rawLocale = pygame.mouse.get_pos()
+    cursorSpot = [int(rawLocale[0]/screenscale),int(rawLocale[1]/screenscale)]
+    if pygame.mouse.get_pressed(3) == (1,0,0):
+        if lclick == False:
+            loop = 0
+            print(list(Datafile["Objects"].keys()))
+            name = list(Datafile["Objects"].keys())[Tilebox.curselection()[0]]
+            print(name)
+            editname=name
+            while True:
+                if editname in editObjs.keys():
+                    loop += 1
+                    editname = f"{name}{loop}"
+                else:
+                    break
+            editObjs.update({editname: [Datafile[editname][0],
+             "2",
+              editName,
+               Datafile[editname][1],
+                cursorSpot[0]+camera.xpos,
+                 cursorSpot[1]+camera.ypos,
+                  "Objects",
+                   "charLayer",
+                   Datafile["editname"][2],
+                    "HOST"]})
+            lclick = True
+    else:
+        lclick = False
+    if pygame.mouse.get_pressed(3)==(0,0,1):
+        if rclick == False:
+            pass
+        rclick = True
+    else:
+        rclick = False
 
 #def themebrush
 def themeBlocks(level,camera):
@@ -251,7 +333,7 @@ def placeBlocks(level, camera):
         row = level.collisionData[int(((cursorSpot[1]-cursorSpot[1]%8)+(camera.ypos-camera.ypos%8))/8)]
         row[int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = tiletype
         global themetype
-        print(themetype)
+        #print(themetype)
         try:
             #level.flipMap[int((cursorSpot[1]-cursorSpot[1]%8+(camera.ypos-camera.ypos%8))/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
             level.tileset[int((cursorSpot[1]-cursorSpot[1]%8+(camera.ypos-camera.ypos%8))/8)][int(((cursorSpot[0]-cursorSpot[0]%8)+(camera.xpos-camera.xpos%8))/8)] = themetype
@@ -268,11 +350,6 @@ def placeBlocks(level, camera):
         #switch block stuff
         #flip block stuff
         #switch tileset stuff
-#def placeobject
-        #if pixel of level is clicked:
-            #place an object there
-        #switch object stuff
-        #edit object properties stuff
 
 #collision Detection
 def collisionCheck(point,level, camera):

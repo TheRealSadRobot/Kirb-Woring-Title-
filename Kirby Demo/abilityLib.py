@@ -11,20 +11,14 @@ def beamAttack(obj):
         anglemod = 0
         if obj.dir == "left":
             while num <= 40:
-                beam = gameLib.Attack(0,"Beam","None",
-                                       obj.location[0],obj.location[1],
-                                       obj.objlist,obj.renderLayer,"Normal",
-                                       obj.currentLevel,25,[-8-num,8+num,1,obj.location,-90-anglemod],obj,"circle",
-                                       None)
+                beam = gameLib.Attack(0,"Beam",obj.location[0],obj.location[1],obj.objlist,
+                 obj.renderLayer,"Normal",obj.currentLevel,[25,[-8-num,8+num,1,obj.location,-90-anglemod],obj,"circle",None])
                 anglemod += 0.125
                 num+=8
         else:
             while num <= 40:
-                beam = gameLib.Attack(0,"Beam","None",
-                                       obj.location[0],obj.location[1],
-                                       obj.objlist,obj.renderLayer,"Normal",
-                                       obj.currentLevel,25,[8+num,8+num,1,obj.location,-90-anglemod],obj,"circle",
-                                       None)
+                beam = gameLib.Attack(0,"Beam",obj.location[0],obj.location[1],obj.objlist,
+                 obj.renderLayer,"Normal",obj.currentLevel,[25,[8+num,8+num,1,obj.location,-90-anglemod],obj,"circle",None])
                 anglemod += 0.125
                 num+=8
 
@@ -34,29 +28,29 @@ def WaterSpit(obj):
         obj.actTimer = 25
         obj.fallspeed = 0
         if obj.keys[pygame.K_UP]:
-            spout = gameLib.Attack(0,"Star","None",
+            spout = gameLib.Attack(0,"Star",
                                    obj.location[0],obj.location[1],
                                    obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[0,-8,1],obj,"parent",
-                                   "submergedCheck")
+                                   obj.currentLevel,[25,[0,-8,1],obj,"parent",
+                                   "submergedCheck"])
         elif obj.keys[pygame.K_DOWN]:
-            spout = gameLib.Attack(0,"Star","None",
+            spout = gameLib.Attack(0,"Star",
                                    obj.location[0],obj.location[1],
                                    obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[0,8,1],obj,"parent",
-                                   "submergedCheck")
+                                   obj.currentLevel,[25,[0,8,1],obj,"parent",
+                                   "submergedCheck"])
         elif obj.dir == "left":
-            spout = gameLib.Attack(0,"Star","None",
+            spout = gameLib.Attack(0,"Star",
                                    obj.location[0],obj.location[1],
                                    obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[-8,0,1],obj,"parent",
-                                   "submergedCheck")
+                                   obj.currentLevel,[25,[-8,0,1],obj,"parent",
+                                   "submergedCheck"])
         else:
-            spout = gameLib.Attack(0,"Star","None",
+            spout = gameLib.Attack(0,"Star",
                                    obj.location[0],obj.location[1],
                                    obj.objlist,obj.renderLayer,"Shoot1",
-                                   obj.currentLevel,25,[8,0,1],obj,"parent",
-                                   "submergedCheck")
+                                   obj.currentLevel,[25,[8,0,1],obj,"parent",
+                                   "submergedCheck"])
     else:
         print("dip")
 def Copy(obj):
@@ -92,16 +86,16 @@ def Copy(obj):
                         if type(item).__name__ == "Enemy":
                             if obj.dir == "left":
                                 if obj.mouthfull > 1:
-                                    star = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[-4,0,1],obj,"line")
-                                    lilstar = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[16,16,-1,star.location],obj,"circle")
+                                    star = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[-4,0,1],obj,"line",None])
+                                    lilstar = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[16,16,-1,star.location,0],obj,"circle",None])
                                 else:
-                                    star = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[-4,0,1],obj,"line")
+                                    star = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[-4,0,1],obj,"line",None])
                             else:
                                 if obj.mouthfull > 1:
-                                    star = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[4,0,1],obj,"line")
-                                    lilstar = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[16,16,1,star.location],obj,"circle")
+                                    star = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[4,0,1],obj,"line",None])
+                                    lilstar = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[16,16,1,star.location,0],obj,"circle",None])
                                 else:
-                                    star = gameLib.Attack(0,"Star","None",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,100,[4,0,1],obj,"line")
+                                    star = gameLib.Attack(0,"Star",obj.location[0],obj.location[1],obj.objlist,obj.renderLayer,"Shoot1",obj.currentLevel,[100,[4,0,1],obj,"line",None])
                             obj.inmouth = []
                             obj.mouthfull = 0
                             break

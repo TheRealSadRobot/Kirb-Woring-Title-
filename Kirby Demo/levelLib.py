@@ -8,8 +8,9 @@ Sheet = pygame.image.load("Kirbo Sprites.png")
 Datafile = json.load(open("Support.json"))
 
 class Level:
-    def __init__(self, theme, name, renderLayer, objList):
+    def __init__(self, theme, name, objList, renderLayer):
         self.__name = name
+        self.name = name
         self.file =  json.load(open(f"LevelData\{self.__name}.json"))
         self.__graphicsData = Datafile["Terrain"]["SpriteCoordinates"]
         self.collisionData = self.file.get("Layout")
@@ -33,8 +34,8 @@ class Level:
         for Object in self.file.get("Objects"):
             objectData =self.file['Objects'][Object]
             className = getattr(gameLib,f"{self.file['Objects'][Object][0]}")
-            objectInLevel = className(objectData[1],objectData[2],objectData[3],objectData[4],objectData[5],renderLayer,objList,objectData[8],self)
-
+            objectInLevel = className(objectData[1],objectData[2],objectData[3],objectData[4],objList,renderLayer,objectData[7],self,objectData[8])
+    
     def loadLevel(self, Receptacle, camera):
         #for each entry in L2
         for item in range(len(self.animList)):
@@ -59,22 +60,24 @@ class Level:
             toEdit[self.animList[item][1]][self.animList[item][0]] = Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][1]
             #print()
         for y in range(len(self.collisionData)):
-            for x in range(len(self.collisionData[y])):
-                #NOTE: graphicsData[Datafile["Themekey"][str(self.file["Tileset"][y][x])]] will access the theme
-                graphics = self.__graphicsData.get(Datafile["Tilekey"][str(self.collisionData[y][x])])
-                tile = pygame.Surface((8,8))
-                tile.blit(Sheet, (0,0), (graphics[0],graphics[1],8,8))
-                pallatename = Datafile["Pallatekey"][str(self.tileset[y][x])]
-                pallate = Datafile["Pallates"][pallatename]
-                tile = self.pallateApply(pallate,tile)
-                if self.file["FlipMap"][y][x] == 1:
-                    Receptacle.blit(pygame.transform.flip(tile,1,0), ((x*8)-camera.xpos,(y*8)-camera.ypos))
-                elif self.file["FlipMap"][y][x] == 2:
-                    Receptacle.blit(pygame.transform.flip(tile,0,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
-                elif self.file["FlipMap"][y][x] == 3:
-                    Receptacle.blit(pygame.transform.flip(tile,1,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
-                else:
-                    Receptacle.blit(tile, ((x*8)-camera.xpos,(y*8)-camera.ypos))
+            if y*8-camera.ypos<248 and y*8-camera.ypos>=-8:
+                for x in range(len(self.collisionData[y])):
+                    if x*8-camera.xpos<264 and x*8-camera.xpos>=-8:
+                        #NOTE: graphicsData[Datafile["Themekey"][str(self.file["Tileset"][y][x])]] will access the theme
+                        graphics = self.__graphicsData.get(Datafile["Tilekey"][str(self.collisionData[y][x])])
+                        tile = pygame.Surface((8,8))
+                        tile.blit(Sheet, (0,0), (graphics[0],graphics[1],8,8))
+                        pallatename = Datafile["Pallatekey"][str(self.tileset[y][x])]
+                        pallate = Datafile["Pallates"][pallatename]
+                        tile = self.pallateApply(pallate,tile)
+                        if self.file["FlipMap"][y][x] == 1:
+                            Receptacle.blit(pygame.transform.flip(tile,1,0), ((x*8)-camera.xpos,(y*8)-camera.ypos))
+                        elif self.file["FlipMap"][y][x] == 2:
+                            Receptacle.blit(pygame.transform.flip(tile,0,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
+                        elif self.file["FlipMap"][y][x] == 3:
+                            Receptacle.blit(pygame.transform.flip(tile,1,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
+                        else:
+                            Receptacle.blit(tile, ((x*8)-camera.xpos,(y*8)-camera.ypos))
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
