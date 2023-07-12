@@ -38,8 +38,9 @@ class Object:
             self.spriteSize = Datafile["Character"]["SpriteSize"][self.charName][self.animFrame]
             self.animItr = 0
             self.sprite = pygame.Surface((self.spriteSize[0],self.spriteSize[1]))
-        except:
-            pass
+        except Exception as e:
+            if isinstance(self,platform):
+                raise(e)
         try:
             self.pallate = Datafile["Character"]["Pallates"][self.charName][pallate]
         except:
@@ -504,7 +505,7 @@ class Object:
             print(e)
     
     def move(self):
-        if self.alive == True:
+        if self.mode != "dead":
             if (self.speed[0] > 0 and not self.blockedRight) or (self.speed[0] < 0 and not self.blockedLeft):
                 if self.speed[0] > 0:
                     self.location[0] += math.ceil(self.speed[0])
@@ -570,7 +571,7 @@ class Object:
     def collisionCheck(self, point):
         ##print(f"{self.charName} {self.pallateName} is testing collision")
         try:
-            #check all four points on character.
+            #you should check all four points on character.
             #find what tile type they are on
             tilecountx = int(point[0]//8)
             if point[0] <= 0 or point[1] <= 0:
@@ -603,8 +604,9 @@ class Object:
                         ##print(f"{self.charName} {self.pallateName} is reigestering collision with a dual-flipped block: type {tiletype}")
                         return True
                     else:
-                        return False
+                        return False    
                 else:
+                    #check if out of bounds. if so, treat as if solid
                     thing =  Datafile["Terrain"]["CollisionData"][Datafile["CollisionKey"][tilenum]][point[0]%8]
                     if thing[point[1]%8] == 1:
                         #print(f"{self.charName} {self.pallateName} is reigestering collision with a non-flipped block: type {tiletype}")
@@ -1003,7 +1005,24 @@ class Object:
         except:
             print("dip")
             return 0
-            
+    def platformCheck(self):
+        #if  collisions contains moving platforms:
+        for obj in self.collide:
+            if isinstance(obj,platform):
+                #if self.bottom.y <= platform.top.y:
+                if self.bottom[1] <= obj.top[1]:
+                    grounded = True
+                    self.location += obj.top[1]-self.bottom[1]
+                    self.speed[0] += obj.speed[0]
+                    self.speed[1] += obj.speed[1]
+                    #grounded = True
+                #if platform not semisolid:
+                    #if self.right.x <= platform.left.x:
+                        #self.blockedright = True
+                    #elif self.right.x >= platform.left.x:
+                        #self.blockedleft = True
+                    #elif self.top.y >= platform.bottom.y:
+                        #self.blocked = topTrue
     def submergedCheck(self):
         self.submerged = 0
         for obj in self.collide:
@@ -1026,7 +1045,7 @@ class Character(Object):
         Object.__init__(self, ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level)
         self.ability = Uniques[0]
         self.lastkeys = pygame.key.get_pressed()
-        self.alive = True
+        self.mode = "alive"
         self.inhaled = False
         self.mouthed = None
         self.inmouth = []
@@ -1142,7 +1161,6 @@ class Character(Object):
 class Player(Character):
     def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
         Character.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques)
-        self.alive = True
         self.attack = False
         self.startInhale = False
         self.respawnpoint = (xlocation,ylocation)
@@ -1161,10 +1179,11 @@ class Player(Character):
         #print(self.blockedTop,self.blockedLeft,self.blockedRight,self.grounded)
         #print(self.bottom)
         #print(self.getTileType(self.top), self.getTileType(self.left), self.getTileType(self.right), self.getTileType(self.left))
-        if(self.alive == True):
+        if(self.mode == "alive"):
             #print(self.location,self.blockedLeft,self.blockedRight,self.blockedTop,self.grounded)
             self.getLadderCollide()
             self.submergedCheck()
+            self.platformCheck()
             self.playerScript()
             self.move()
             #self.run()
@@ -1172,10 +1191,17 @@ class Player(Character):
             self.collisionTests()
             self.collisionCorrect()
             ##print(self.location)
-        else:
+        elif self.mode == "dead":
             self.deathfall(cam)
             self.move()
             self.physicsSim()
+        elif self.mode == "goalgamejump":
+            self.getLadderCollide()
+            self.submergedCheck()
+            self.goalGamePlayerScript()
+            self.move()
+            self.collisionTests()
+            self.collisionCorrect()
         self.animate()
         self.drawPoints()
         self.render()
@@ -1185,6 +1211,36 @@ class Player(Character):
         self.wasBlockedTop = self.blockedTop
         self.wasGrounded = self.grounded
         #print(self.location)
+
+    def goalGamePlayerScript(self):
+        self.collideWithObj()
+        #run physics sim
+        if self.grounded == False and self.climb == False:
+            self.physicsSim()
+        else:
+            self.fallingTime = 0
+            self.floating = False
+            self.speed[1] = 0
+        #grounded and ungrounded
+        #check for input
+        if self.actTimer > 0:
+            self.keys = self.lastkeys
+        if self.multiplayerMode == "HOST":
+            self.keys = pygame.key.get_pressed()
+            self.lastkeys = self.keys
+        else:
+            self.keys = self.lastkeys
+        if self.keys[pygame.K_SPACE]:
+            if self.slideItr == 0:
+                if self.grounded:
+                    self.jump()
+        else:
+            self.flap = False
+            
+            if self.attack == False and self.grounded == False:
+                self.fallingTime += 1
+            else:
+                self.fallingTime == 0
 
     def playerScript(self):
         self.collideWithObj()
@@ -1209,6 +1265,7 @@ class Player(Character):
             self.Kill()
             self.climb = False
         if self.keys[pygame.K_c]:
+            self.mode = "goalgamejump"
             if self.ability == "copy":
                 self.ability = "beam"
                 print("Ability switched to: BEAM")
@@ -1380,9 +1437,9 @@ class Player(Character):
             self.squishTop()
 
     def Kill(self):
-        if self.alive == True:
+        if self.mode == "alive":
             #print("Player Death")
-            self.alive = False
+            self.mode = "dead"
             self.floating = False
             self.mouthfull = 0
             self.attack = False
@@ -1408,7 +1465,7 @@ class Player(Character):
         self.speed[0] = 0
 
     def respawn(self, cam):
-        self.alive = True
+        self.mode = "alive"
         self.location[0] = self.respawnpoint[0]
         self.location[1] = self.respawnpoint[1]
         cam.refocus(self.location)
@@ -1439,6 +1496,7 @@ class Enemy(Character):
         self.collisionTests()
         self.behavior()
         self.submergedCheck()
+        self.platformCheck()
         #pygame.draw.rect(self.renderLayer, (0,255,0), (self.location[0]+self.spriteSize[0]/2, self.location[1]+self.spriteSize[1],1,1))
         if self.attack == True or self.floating == True or self.submerged > 2:
             self.maxfallspeed = 2
@@ -1596,6 +1654,100 @@ class Attack(Object):
                 #print("Dip")
     def moveTo(self,x,y):
         self.location = (x,y)
+
+class platform(Object):
+    def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):
+        Object.__init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer,pallate,Level)
+        #a boolean that determines whether or not the platform is started when the player lands on it
+        self.activate = Uniques[0]
+        #boolean that determines whether or not the platform is a semisolid
+        self.semisolid = Uniques[1]
+        #list of lists
+            #each sub-list contains the type of movement (line or arc) and the duration of the movement
+        self.movement = Uniques[2]
+        #whether or not to destroy the platform when it's done it's thing
+        self.destroy = Uniques[3]
+        #type of platform
+        self.type = Uniques[4]
+        #size lol
+        self.sizex = Uniques[5][0]
+        self.sizey = Uniques[5][1]
+        
+    def update(self,mainCam):
+        self.camera = mainCam
+        self.getpoints()
+        self.render()
+        self.drawPoints()
+            
+    def getpoints(self):
+        self.top = (int(self.location[0]+self.sizex/2), int(self.location[1]))
+        self.bottom = (int(self.location[0]+self.sizex/2), int(self.location[1]+self.sizey)-1)
+        self.right = (self.location[0]+self.sizex-1, self.location[1]+int(self.sizey/2)-1)
+        self.left = (self.location[0], self.location[1]+int(self.sizey/2)-1)
+        
+    def render(self):
+        self.sprite = pygame.transform.scale(self.sprite,(self.sizex,self.sizey))
+        frame = Datafile["Character"]["Animations"]["Platform"][self.type][self.animFrameNumber]
+        if frame[1] == self.animItr:
+            self.animItr = 0
+            self.animFrameNumber += 1
+        else:
+            self.animItr += 1
+        if self.animFrameNumber > len(Datafile["Character"]["Animations"]["Platform"][self.type])-1:
+            self.animFrameNumber = 0
+        self.spriteCoordinates = Datafile["Character"]["SpriteCoordinates"]["Platform"][frame[0]]
+        #make canvas for l-r edges
+        edgesprite = pygame.Surface((8,self.sizey))
+        #fill sprite with middle
+        counter = 0
+        while counter < self.sizey:
+            counter2 = 0
+            while counter2 < self.sizex:
+                self.sprite.blit(Sheet, (counter2,counter),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1]+8,8,8))
+                counter2 += 8
+            counter += 8
+        #fill edge canvas with l-edge sprite
+        counter = 0
+        while counter < self.sizey:
+            edgesprite.blit(Sheet, (0,counter),(self.spriteCoordinates[0],self.spriteCoordinates[1]+8,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,8))
+        #fill edge canvas with r-edge sprite
+        counter = 0
+        while counter < self.sizey:
+            edgesprite.blit(Sheet, (0,counter),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1]+8,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (self.sizex-8,8))
+        #make canvas for t-b edges
+        edgesprite = pygame.transform.scale(edgesprite, ((self.sizex,8)))
+        #fill edge canvas with t-edge sprite
+        counter = 0
+        while counter < self.sizex:
+            edgesprite.blit(Sheet, (counter,0),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1],8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,0))
+        #fill edge canvas with b-edge sprite
+        counter = 0
+        while counter < self.sizex:
+            edgesprite.blit(Sheet, (counter,0),(self.spriteCoordinates[0]+8,self.spriteCoordinates[1]+16,8,8))
+            counter += 8
+        #add edge canvas to door canvas
+        self.sprite.blit(edgesprite, (0,self.sizey-8))
+        #add corners to canvas
+        self.sprite.blit(Sheet, (0,0),(self.spriteCoordinates[0],self.spriteCoordinates[1],8,8))
+        self.sprite.blit(Sheet, (self.sizex-8,0),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1],8,8))
+        self.sprite.blit(Sheet, (0,self.sizey-8),(self.spriteCoordinates[0],self.spriteCoordinates[1]+16,8,8))
+        self.sprite.blit(Sheet, (self.sizex-8,self.sizey-8),(self.spriteCoordinates[0]+16,self.spriteCoordinates[1]+16,8,8))
+        #add decorations
+        #place door in level
+        self.sprite = self.pallateApply(self.pallate,self.sprite)
+        self.renderLayer.blit(self.sprite,
+                              (self.location[0]-self.camera.xpos,
+                               self.location[1]-self.camera.ypos),
+                              (0,0,self.sizex,self.sizey))
 
 class door(Object):
     def __init__(self,ID,charName, xlocation, ylocation, arrayDestination,renderLayer, pallate,Level,Uniques):

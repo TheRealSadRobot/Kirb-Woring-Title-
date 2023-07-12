@@ -63,7 +63,7 @@ def Copy(obj):
 
     obj.inhalingnum = 0
     for enemy in obj.objlist:
-        if issubclass(type(enemy), gameLib.Object):
+        if issubclass(type(enemy), gameLib.Character):
             if enemy.inhaled == True:
                 obj.inhalingnum += 1
             
@@ -153,7 +153,7 @@ def Copy(obj):
     #print(obj.inhalingnum)
     if obj.attack == True and (obj.mouthfull == 0 or obj.inhalingnum > 0):
         for enemy in obj.objlist:
-            if issubclass(type(enemy), gameLib.Object):
+            if issubclass(type(enemy), gameLib.Character):
                 if type(enemy).__name__ != "NPC":
                     if obj.dir == "right" and (enemy.location[0]-obj.right[0]) <= 48 and (enemy.location[0]-obj.right[0]) > 0:
                         if (obj.top[1]-enemy.location[1]-enemy.spriteSize[1]) <= 24 and (bottom[1]-enemy.location[1]) > -24:

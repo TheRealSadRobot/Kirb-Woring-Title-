@@ -45,6 +45,7 @@ elif num == 2:
 
 Water = gameLib.fluid(1,"Water",100,50,Objects,backLayer,"Water",currentLevel,[80,400])
 Door = gameLib.door(2,"Door",56,168,Objects,charLayer,"White",currentLevel,["Normal",[256,64],[16,32],"load"])
+Platform = gameLib.platform(3,"Platform",200,100,Objects,charLayer,"Stormy",currentLevel,[0,0,0,0,"Cloud",[48,16]])
 TriggerTest = gameLib.enterTrigger(1,"Null",256,0,Objects,backLayer,"Null",currentLevel,["Player",["beam",[32,0,32,30,"tileset","6",256,240]],["abilitychange","lvlAlterRange"]])
 Player = gameLib.Player(0,"Kirby",56,100,Objects,charLayer,"Normal",currentLevel,["beam","HOST"])
 #Test = gameLib.Attack("Kirby","None",150,100,Objects,charLayer,"Dee",currentLevel,500,Player,"circle")
