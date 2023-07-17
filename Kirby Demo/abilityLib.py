@@ -126,7 +126,7 @@ def Copy(obj):
     
     if obj.attack == True:# and obj.mouthfull == 0:
         for enemy in obj.collide:
-            if issubclass(type(enemy), gameLib.Object):
+            if issubclass(type(enemy), gameLib.Character):
                 #print(enemy.mouthed, enemy.inhaled)
                 if enemy != None and enemy.mouthed == None and enemy.inhaled == True:# and type(enemy).__name__ != "NPC":
                     #print("dip")

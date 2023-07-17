@@ -28,6 +28,7 @@ class Object:
         self.dir = "right"
         self.sizex = 16
         self.sizey = 16
+        self.speed = [0,0]
         #current sprite
         try:
             self.animFrame = Datafile["Character"]["Animations"][self.charName][list(Datafile["Character"]["Animations"][self.charName].keys())[0]][0][0]
@@ -64,11 +65,11 @@ class Object:
                 try:
                     #   if obj != self.inmouth:
                     #if top or bottom is between target body
-                    if (self.bottom[1] >= obj.bottom[1] and self.top[1] <= obj.bottom[1]) or (self.bottom[1] >= obj.top[1] and self.top[1] <= obj.top[1]):
+                    if (self.bottom[1] >= obj.bottom[1] and self.top[1] <= obj.bottom[1]) or (self.bottom[1] >= obj.top[1] and self.top[1] <= obj.top[1]) or (self.bottom[1] <= obj.bottom[1] and self.top[1] >= obj.top[1]):
                         #if isinstance(self,Player):
                             #print(f"{obj.charName} {obj.pallateName}: Y-intersect")
                         #if left or right is between target body
-                        if self.left[0] <= obj.right[0] and self.right[0] >= obj.left[0] or self.left[0] <= obj.right[0] and self.right[0] >= obj.left[0]:
+                        if (self.left[0] <= obj.right[0] and self.right[0] >= obj.left[0]) or (self.left[0] <= obj.right[0] and self.right[0] >= obj.left[0]) or (self.right[0] <= obj.right[0] and self.left[0] >= obj.left[0]):
                             #if isinstance(self,Player):
                                 #print(f"{obj.charName} {obj.pallateName}: X-intersect")
                             ##print("COLLISION")
@@ -188,17 +189,24 @@ class Object:
             pass
 
     def setCollideBoxSize(self,xSize,ySize):
+        if self.crouching==True:
+            print("yee")
         self.sizex = xSize
         self.sizey = ySize
         self.getpoints()
+        if issubclass(type(self),Character):
+            for obj in self.collide:
+                if isinstance(obj,platform):
+                    if self.bottom[1] > obj.top[1] and self.top[1] <= obj.top[1]:
+                        self.location[1] += obj.top[1]-self.bottom[1]
         if self.grounded == True:
             if not self.collisionCheck(self.bottom):
-                dist = self.distanceToCollide(self.bottom,1,1)+1
+                dist = self.distanceToCollide(self.bottom,1,1)
                 if dist < xSize:
                     self.location[1] += dist
                     self.getpoints()
             else:
-                dist = self.distanceToNotCollide(self.bottom,1,-1)+1
+                dist = self.distanceToNotCollide(self.bottom,1,-1)
                 if dist > -xSize:
                     self.location[1] += dist
                     self.getpoints()
@@ -345,43 +353,21 @@ class Object:
             topDist = self.distanceToNotCollideInRange(self.location,1,-1)
             bottomDist = self.distanceToNotCollideInRange(self.location,1,1)
             distList = [topDist, rightDist, bottomDist, leftDist]
+            print(distList)
             #distNameList = ["TOP","RIGHT","BOTTOM","LEFT"]
             finalDistIndex = 0
             for index in range(len(distList)):
                 #print(f"Checking {distNameList[finalDistIndex]} against {distNameList[index]}")
-                if abs(distList[index-1]) < abs(distList[finalDistIndex]):
-                    finalDistIndex = index-1
+                if abs(distList[index]) < abs(distList[finalDistIndex]):
+                    finalDistIndex = index
                     #print(f"Switching to {distNameList[index]}")
+            print(finalDistIndex)
+            print(distList[finalDistIndex])
             if finalDistIndex == 0 or finalDistIndex == 2:
                 self.location[1] += distList[finalDistIndex]
             else:
                 self.location[0] += distList[finalDistIndex]
-        """if self.collisleftionCheck(self.location):
-            #print(self.location)
-            if self.speed[1]>=0:
-                self.location[1] += self.distanceToNotCollide(self.location,1,-1)
-                self.getpoints()
-                self.location[1] += self.distanceToNotCollide(self.bottom,1,-1)
-                self.grounded = True
-                self.speed[1] = 0
-            elif self.speed[1]<0:
-                self.location[1] += self.distanceToNotCollide(self.location,1,1)
-                self.getpoints()
-                self.location[1] += self.distanceToNotCollide(self.top,1,1)
-                self.blockedTop = True
-                self.speed[1] = 0
-            elif self.speed[0]>0:
-                self.location[0] += self.distanceToNotCollide(self.location,0,-1)
-                self.getpoints()
-                self.location[0] += self.distanceToNotCollide(self.right,0,-1)
-                self.blockedRight = True
-            elif self.speed[0]<0:
-                self.location[0] += self.distanceToNotCollide(self.location,0,1)
-                self.getpoints()
-                self.location[0] += self.distanceToNotCollide(self.left,0,1)
-                self.blockedLeft = True
-            self.getpoints()"""
-        
+                
         if self.grounded == True:
             if self.blockedTop == False:
                 self.location[1]+=self.distanceToNotCollide(self.bottom,1,-1)+1
@@ -572,7 +558,24 @@ class Object:
         ##print(f"{self.charName} {self.pallateName} is testing collision")
         try:
             #you should check all four points on character.
+            #check if colliding w/ platforms too
+            #if  collisions contains platforms:
+            for obj in self.objlist:
+                if isinstance(obj,platform):
+                    #print("checking...")
+                    #if platform isn't semisolid, returns true if within borders
+                    if obj.semisolid != True:
+                        if point[0] <= obj.right[0] and point[0] >= obj.left[0]:
+                            if point[1] >= obj.top[1] and point[1] <= obj.bottom[1]:
+                                return True
+                    #else, only triggers if a secondary point is not within the borders
+                    elif (self.bottom[1] <= obj.top[1]+4 and self.speed[1] >= 0):
+                        if point[0] <= obj.right[0] and point[0] >= obj.left[0]:
+                            if point[1] >= obj.top[1] and point[1] <= obj.bottom[1]:
+                                return True
             #find what tile type they are on
+            if isinstance(self, Player):
+                print(self.speed)
             tilecountx = int(point[0]//8)
             if point[0] <= 0 or point[1] <= 0:
                 return True
@@ -654,13 +657,6 @@ class Object:
         else:
                 self.speed[0] -= 0.25
         if self.grounded == False:
-            rdist = self.distanceToCollide(self.bottom,1,1)
-            ldist = self.distanceToCollide(self.bottom,1,1)
-            if ldist > rdist:
-                self.bottom = self.bottom
-            else:
-                self.bottom = self.bottom
-        
             fall = self.distanceToCollide(self.bottom,1,1)
             if fall < 16:
                 self.location[1] += fall
@@ -860,7 +856,7 @@ class Object:
             pass
         
     def wait(self):
-        self.speed[0] = 0
+        #self.speed[0] = 0
         if self.climb == False:
             if self.grounded == True:
                 if self.crouching == False:
@@ -869,12 +865,6 @@ class Object:
                         #if isinstance(self, Player):
                             ##print(Datafile["CollisionKey"][str(self.currentLevel.collisionData[self.bottom[1]//8][self.bottom[0]//8])])
                         #if Datafile["CollisionKey"][str(self.currentLevel.collisionData[self.bottom[1]//8][self.bottom[0]//8])] == "Floor45":
-                        rdist = self.distanceToCollide(self.bottom,1,1)
-                        ldist = self.distanceToCollide(self.bottom,1,1)
-                        if ldist > rdist:
-                            self.bottom = self.bottom
-                        else:
-                            self.bottom = self.bottom
                         if self.getTileType(self.bottom) == "Floor45":
                             if self.currentLevel.file["FlipMap"][self.bottom[1]//8][self.bottom[0]//8] == 0:
                                 if self.dir == "right":
@@ -1005,24 +995,6 @@ class Object:
         except:
             print("dip")
             return 0
-    def platformCheck(self):
-        #if  collisions contains moving platforms:
-        for obj in self.collide:
-            if isinstance(obj,platform):
-                #if self.bottom.y <= platform.top.y:
-                if self.bottom[1] <= obj.top[1]:
-                    grounded = True
-                    self.location += obj.top[1]-self.bottom[1]
-                    self.speed[0] += obj.speed[0]
-                    self.speed[1] += obj.speed[1]
-                    #grounded = True
-                #if platform not semisolid:
-                    #if self.right.x <= platform.left.x:
-                        #self.blockedright = True
-                    #elif self.right.x >= platform.left.x:
-                        #self.blockedleft = True
-                    #elif self.top.y >= platform.bottom.y:
-                        #self.blocked = topTrue
     def submergedCheck(self):
         self.submerged = 0
         for obj in self.collide:
@@ -1152,7 +1124,8 @@ class Character(Object):
                 #print("squish here")
                 self.setCollideBoxSize(8,8)
                 self.getpoints()
-                self.location[1] += self.distanceToCollide(self.top,1,-1)
+                if not self.collisionCheck(self.top):
+                    self.location[1] += self.distanceToCollide(self.top,1,-1)
                 self.getpoints()
                 self.playAnimation("Crouch")
                 self.actTimer = 10
@@ -1183,7 +1156,6 @@ class Player(Character):
             #print(self.location,self.blockedLeft,self.blockedRight,self.blockedTop,self.grounded)
             self.getLadderCollide()
             self.submergedCheck()
-            self.platformCheck()
             self.playerScript()
             self.move()
             #self.run()
@@ -1265,7 +1237,7 @@ class Player(Character):
             self.Kill()
             self.climb = False
         if self.keys[pygame.K_c]:
-            self.mode = "goalgamejump"
+            #self.mode = "goalgamejump"
             if self.ability == "copy":
                 self.ability = "beam"
                 print("Ability switched to: BEAM")
@@ -1496,7 +1468,6 @@ class Enemy(Character):
         self.collisionTests()
         self.behavior()
         self.submergedCheck()
-        self.platformCheck()
         #pygame.draw.rect(self.renderLayer, (0,255,0), (self.location[0]+self.spriteSize[0]/2, self.location[1]+self.spriteSize[1],1,1))
         if self.attack == True or self.floating == True or self.submerged > 2:
             self.maxfallspeed = 2
@@ -1672,12 +1643,83 @@ class platform(Object):
         #size lol
         self.sizex = Uniques[5][0]
         self.sizey = Uniques[5][1]
+
+        self.loop = 0
+        self.movetimer = 0
+        #self.speed = [0,-0.5]self.angle = 0
+        
+    def parentMove(self):
+        self.speed[0] = self.location[0] - (self.alligience.location[0]+self.offsetx)
+        self.speed[1] = self.location[1] - (self.alligience.location[1]+self.offsety)
+        
+    def circleMove(self,center):
+        ##print(self.speed)
+        rotSpeed = 0.1
+        if self.angle < 360:
+            self.angle += rotSpeed*self.movespeed
+        else:
+            self.angle = 0
+        self.speed[0] = self.location[0] - (center[0] + (math.cos(self.angle))*self.radx)
+        self.speed[1] = self.location[1] - (center[1] + (math.sin(self.angle))*self.rady)
+            
+    def lineMove(self):
+        pass
         
     def update(self,mainCam):
         self.camera = mainCam
+        self.collideWithObj()
+        self.childMove()
+        self.calcMove()
+        self.move()
         self.getpoints()
         self.render()
         self.drawPoints()
+
+    def childMove(self):
+        print(self.collide)
+        for obj in self.collide:
+            if issubclass(type(obj),Character) and obj.location[1] <= self.top[1] and obj.grounded == True:
+                if self.semisolid == False:
+                    #print("ymid")
+                    obj.location[0]+=self.speed[0]
+                    obj.location[1]+=self.speed[1]
+                else:
+                    if obj.slideItr <= 0:
+                        obj.location[0] += self.speed[0]
+
+
+    def calcMove(self):
+        #if activated == True
+        if True:
+            #get the list of movements
+            #select the appropriate phase of movement
+            mode = self.movement[self.loop][0]
+            moveinfo = self.movement[self.loop][1]
+            #if the last one was done
+            if mode.lower() == "circle":
+                self.radx = moveinfo[0]
+                self.rady = moveinfo[1]
+                self.center = moveinfo[3]
+                self.angle = moveinfo[4]
+                self.circleMove(self.center)
+            elif mode.lower() == "line":
+                self.speed[0] = moveinfo[0]
+                self.speed[1] = moveinfo[1]
+                self.lineMove()
+            elif mode.lower() == "parent":
+                self.offsetx = moveinfo[0]
+                self.offsety = moveinfo[1]
+                self.parentMove()
+            self.movetimer += 1
+            if self.movetimer >= self.movement[self.loop][2]:
+                self.movetimer = 0
+                self.loop += 1
+            if self.loop >= len(self.movement):
+                self.loop = 0
+
+    def move(self):
+        self.location[0] += self.speed[0]
+        self.location[1] += self.speed[1]
             
     def getpoints(self):
         self.top = (int(self.location[0]+self.sizex/2), int(self.location[1]))

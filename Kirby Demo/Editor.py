@@ -118,8 +118,8 @@ def main():
             name = editObjs.get(obj)[2]
             size = Datafile["Character"]["SpriteSize"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]]
             charLayer.blit(Sheet,
-                             (editObjs.get(obj)[4]-mainCam.xpos-size[0]/2,
-                             editObjs.get(obj)[5]-mainCam.ypos-size[1]/2),
+                             (editObjs.get(obj)[3]-mainCam.xpos-size[0]/2,
+                             editObjs.get(obj)[4]-mainCam.ypos-size[1]/2),
                              (Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][0],
                              Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][1],
                              size[0],
