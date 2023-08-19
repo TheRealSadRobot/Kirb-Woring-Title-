@@ -53,23 +53,23 @@ class Camera:
 
     def movePos(self, xmove,ymove):
         self.__focusx += xmove
-        if self.__focusx+256 >= self.__currentLevel.maxiX*8:
+        if self.__focusx+256 > self.__currentLevel.maxiX*8:
             self.__focusx -= xmove
         elif self.__focusx < 0:
             self.__focusx = 0
         """else:
-            self.__focusx = -1"""
+            self.__focusx += -1"""
         newPos = self.__focusx
         self.xpos = newPos
         
         self.__focusy += ymove
-        if self.__focusy+240 >= self.__currentLevel.maxiY*8:
+        if self.__focusy+240 > self.__currentLevel.maxiY*8:
             self.__focusy -= ymove
         elif self.__focusy < 0:
             #print("arg")
             self.__focusy = 0
         """else:
-            self.__focusy = -1"""
+            self.__focusy += -1"""
         newPos = self.__focusy
         self.ypos = newPos
         

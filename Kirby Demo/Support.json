@@ -716,10 +716,10 @@
     },
     "TileAnimations":
     {
-        "BetaCurtainMove":[["Layout","25",5],["Layout","26",5],["Layout","27",5],["Layout","28",5]]
+        "BetaCurtainMove":[["Layout",25,5],["Layout",26,5],["Layout",27,5],["Layout",28,5]]
     },
     "Objects":
     {
-        "Door":["Door","Normal","White",["load",[256,64],[16,32],"Normal"]]
+        "Door":["door","White",["Normal",[256,64],[16,32],"load"]]
     }
 }

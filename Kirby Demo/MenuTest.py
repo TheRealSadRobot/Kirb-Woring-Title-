@@ -60,8 +60,11 @@ while True:
     fpstimer.tick(60)
     #update gameobjects
     for item in Objects:
-        #print(item.charName)
-        item.update(mainCam)
+        if currentLevel.pauseobj == None:
+            #print(item.charName)
+            item.update(mainCam)
+        elif isinstance(item,gameLib.Player):
+            item.pausePlayerScript()
     mainCam.update()
     #draw the frame
     displayPane.blit(base,(0,0))

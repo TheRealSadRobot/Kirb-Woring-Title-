@@ -1,7 +1,9 @@
 #imports
 import levelLib
+import gameLib
 import camLib
 import json
+import copy
 import pygame
 import time
 import tkinter
@@ -53,9 +55,11 @@ fullscreen = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
               [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
               
 window = pygame.display.set_mode((winsizex*screenscale,winsizey*screenscale))
+global mainCam
 pygame.display.set_caption("Kirby's Dream Level Editor")
 pygame.display.set_icon(pygame.image.load("EditorLogo.png"))
 charLayer = pygame.Surface((winsizex, winsizey))
@@ -74,6 +78,7 @@ Datafile = json.load(open("Support.json"))
 def main():
     #level = levelLib.Level("Beach", "StarballRing",levelObjects,charLayer)
     level = levelLib.Level("Beach", "TestRoom1",levelObjects,charLayer)
+    global mainCam
     mainCam = camLib.Camera(level,None)
     for obj in level.file.get("Objects"):
         #get obj name: level.file.get("Objects").get(obj)[2]
@@ -112,19 +117,85 @@ def main():
         mainCam.update()
         #draw the frame
         displayPane.blit(tileLayer, (0,0))
-
+        
         for obj in editObjs:
             #get obj name: level.file.get("Objects").get(obj)[2]
             name = editObjs.get(obj)[2]
-            size = Datafile["Character"]["SpriteSize"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]]
-            charLayer.blit(Sheet,
-                             (editObjs.get(obj)[3]-mainCam.xpos-size[0]/2,
-                             editObjs.get(obj)[4]-mainCam.ypos-size[1]/2),
-                             (Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][0],
+            #pallate
+            pallate = Datafile["Character"]["Pallates"][editObjs.get(obj)[2]][editObjs.get(obj)[7]]
+
+            if editObjs.get(obj)[0] == "door" or editObjs.get(obj)[0] == "platform":
+                size = editObjs.get(obj)[8][2]
+                if editObjs.get(obj)[0] == "door":
+                    spriteCoordinates = Datafile["Character"]["SpriteCoordinates"][name][editObjs.get(obj)[8][0]]
+                elif editObjs.get(obj)[0] == "platform":
+                    spriteCoordinates = Datafile["Character"]["SpriteCoordinates"][name][editObjs.get(obj)[8][4]]
+                sprite = pygame.Surface((size[0],size[1]))
+                #make canvas for l-r edges
+                edgesprite = pygame.Surface((8,size[1]))
+                #fill sprite with middle
+                counter = 0
+                while counter < size[1]:
+                    counter2 = 0
+                    while counter2 < size[0]:
+                        sprite.blit(Sheet, (counter2,counter),(spriteCoordinates[0]+8,spriteCoordinates[1]+8,8,8))
+                        counter2 += 8
+                    counter += 8
+                #fill edge canvas with l-edge sprite
+                counter = 0
+                while counter < size[1]:
+                    edgesprite.blit(Sheet, (0,counter),(spriteCoordinates[0],spriteCoordinates[1]+8,8,8))
+                    counter += 8
+                #add edge canvas to door canvas
+                sprite.blit(edgesprite, (0,8))
+                #fill edge canvas with r-edge sprite
+                counter = 0
+                while counter < size[1]:
+                    edgesprite.blit(Sheet, (0,counter),(spriteCoordinates[0]+16,spriteCoordinates[1]+8,8,8))
+                    counter += 8
+                #add edge canvas to door canvas
+                sprite.blit(edgesprite, (size[0]-8,8))
+                #make canvas for t-b edges
+                edgesprite = pygame.transform.scale(edgesprite, ((size[0],8)))
+                #fill edge canvas with t-edge sprite
+                counter = 0
+                while counter < size[0]:
+                    edgesprite.blit(Sheet, (counter,0),(spriteCoordinates[0]+8,spriteCoordinates[1],8,8))
+                    counter += 8
+                #add edge canvas to door canvas
+                sprite.blit(edgesprite, (0,0))
+                #fill edge canvas with b-edge sprite
+                counter = 0
+                while counter < size[0]:
+                    edgesprite.blit(Sheet, (counter,0),(spriteCoordinates[0]+8,spriteCoordinates[1]+16,8,8))
+                    counter += 8
+                #add edge canvas to door canvas
+                sprite.blit(edgesprite, (0,size[1]-8))
+                #add corners to canvas
+                sprite.blit(Sheet, (0,0),(spriteCoordinates[0],spriteCoordinates[1],8,8))
+                sprite.blit(Sheet, (size[0]-8,0),(spriteCoordinates[0]+16,spriteCoordinates[1],8,8))
+                sprite.blit(Sheet, (0,size[1]-8),(spriteCoordinates[0],spriteCoordinates[1]+16,8,8))
+                sprite.blit(Sheet, (size[0]-8,size[1]-8),(spriteCoordinates[0]+16,spriteCoordinates[1]+16,8,8))
+                #add decorations
+                #place door in level
+                sprite = pallateApply(sprite, pallate, editObjs.get(obj)[2])
+                charLayer.blit(sprite,
+                                      (editObjs.get(obj)[3]-mainCam.xpos,
+                                       editObjs.get(obj)[4]-mainCam.ypos),
+                                      (0,0,size[0],size[1]))
+            else:
+                size = Datafile["Character"]["SpriteSize"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]]
+                sprite = pygame.Surface((size[0],size[1]))
+                sprite.blit(Sheet,
+                            (0,0),
+                            (Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][0],
                              Datafile["Character"]["SpriteCoordinates"][name][list(Datafile["Character"]["SpriteCoordinates"][name].keys())[0]][1],
                              size[0],
                              size[1]))
-        displayPane.blit(charLayer,(0,16))
+                charLayer.blit(pallateApply(sprite,pallate,editObjs.get(obj)[2]),
+                             (editObjs.get(obj)[3]-mainCam.xpos-size[0]/2,
+                             editObjs.get(obj)[4]-mainCam.ypos-size[1]/2))
+        displayPane.blit(charLayer,(0,0))#16))
 
         global toolvar
         global storage
@@ -148,6 +219,17 @@ def main():
         charLayer.fill((0,255,62))
         charLayer.set_colorkey((0,255,62))
         toolbar.update()
+
+def pallateApply(sprite, pallate, name):
+    colorsprite = pygame.Surface(sprite.get_size())
+    for color in range(len(Datafile["Character"]["Pallates"][name]["Normal"])):
+        startcolor = Datafile["Character"]["Pallates"][name]["Normal"][color]
+        newcolor = pallate[color]
+        colorsprite.fill(newcolor)
+        sprite.set_colorkey(startcolor)
+        colorsprite.blit(sprite,(0,0))
+        sprite.blit(colorsprite,(0,0))
+    return sprite
         
 def toolbarMake(level):
     #tkinter window for change block type and select tools
@@ -183,6 +265,12 @@ def toolbarMake(level):
     Tilebox.pack()
     RoomBelowBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddDown, level))
     RoomBelowBtn.pack()
+    RoomAboveBtn = tkinter.Button(toolbar, text = "New Screen Above", compound = "left", padx = 10, pady = 5, command = partial(screenAddUp, level))
+    RoomAboveBtn.pack()
+    RoomLeftBtn = tkinter.Button(toolbar, text = "New Screen Left", compound = "left", padx = 10, pady = 5, command = partial(screenAddLeft, level))
+    RoomLeftBtn.pack()
+    RoomRightBtn = tkinter.Button(toolbar, text = "New Screen Right", compound = "left", padx = 10, pady = 5, command = partial(screenAddRight, level))
+    RoomRightBtn.pack()
     """RoomAboveBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddUp, level))
     RoomAboveBtn.pack()
     RoomLeftBtn = tkinter.Button(toolbar, text = "New Screen Below", compound = "left", padx = 10, pady = 5, command = partial(screenAddLeft, level))
@@ -218,16 +306,271 @@ def save(level):
                  "Objects":editObjs,
                  "BG":level.file["BG"],
                  "Music":level.file["Music"],
-                 "animList":level.animlist}
+                 "animList":level.animList}
     json.dump(writeThis,writeTo)
     print("Your Game--Saved!")
 
 def screenAddDown(level):
+    print(level.maxiY)
     global fullscreen
-    for item in fullscreen:
+    fs1 = []
+    fs1 = copy.deepcopy(fullscreen)
+    #get location of camera
+    global mainCam
+    camlocus = [mainCam.xpos, mainCam.ypos]
+    #extent of edits will be one screen of tiles to the right and one screen of tiles down
+    for row in range(len(fs1)):
+        for column in range(int((camlocus[0]-camlocus[0]%8)/8)):
+            fs1[row].insert(column,"None")
+    #check if rows exist beforehand
+    for row in range(len(fs1)):
+        if "None" in level.collisionData[int((camlocus[1]-camlocus[1]%8)/8) + 30 + (row)] or int((camlocus[1]-camlocus[1]%8)/8) + 32 + (row) >= 0:
+            #if so, fill row in with zeroes and remove rows from the "to add" list0
+            for columnspot in range(32):
+                #print(int((camlocus[1]-camlocus[1]%8)/8) - row)
+                level.collisionData[int((camlocus[1]-camlocus[1]%8)/8) + 30 + row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+                level.tileset[int((camlocus[1]-camlocus[1]%8)/8) + 30 + row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+                level.flipmap[int((camlocus[1]-camlocus[1]%8)/8) + 30 + row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+            fs1.pop(0)
+
+    #add tiles in extent
+    for item in fs1:
         level.tileset.append(item)
         level.collisionData.append(item)
         level.flipmap.append(item)
+
+    #set level size for growth purposes
+    level.setMaxis()
+        
+def screenAddUp(level):
+    global fullscreen
+    #amount to move stuff down
+    objmoveamt = len(fullscreen)
+    fs1 = []
+    fs2 = []
+    fs3 = []
+    fs1 = copy.deepcopy(fullscreen)
+    fs2 = copy.deepcopy(fullscreen)
+    fs3 = copy.deepcopy(fullscreen)
+    #get location of camera
+    global mainCam
+    camlocus = [mainCam.xpos, mainCam.ypos]
+    #extent of edits will be one screen of tiles to the right and one screen of tiles down
+    for row in range(len(fs1)):
+        for column in range(int((camlocus[0]-camlocus[0]%8)/8)):
+            fs1[row].insert(column,"None")
+            fs2[row].insert(column,"None")
+            fs3[row].insert(column,"None")
+    #check if rows exist beforehand
+    for row in range(len(fs1)):
+        if "None" in level.collisionData[int((camlocus[1]-camlocus[1]%8)/8) - 1 - (row)]:
+            #if so, fill row in with zeroes and remove rows from the "to add" list0
+            for columnspot in range(32):
+                #print(int((camlocus[1]-camlocus[1]%8)/8) - row)
+                level.collisionData[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row][columnspot] = 0
+                level.tileset[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row][columnspot] = 0
+                level.flipmap[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row][columnspot] = 0
+            fs1.pop(-1)
+            fs2.pop(-1)
+            fs3.pop(-1)
+            objmoveamt -= 1
+        elif int((camlocus[1]-camlocus[1]%8)/8) - 1 - (row) >= 0:
+            #if so, fill row in with zeroes and remove rows from the "to add" list0
+            for columnspot in range(32):
+                #print(int((camlocus[1]-camlocus[1]%8)/8) - row)
+                level.collisionData[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+                level.tileset[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+                level.flipmap[int((camlocus[1]-camlocus[1]%8)/8) - 1 - row].insert(int((camlocus[0]-camlocus[0]%8)/8)+columnspot, 0)
+            fs1.pop(-1)
+            fs2.pop(-1)
+            fs3.pop(-1)
+            objmoveamt -= 1
+
+    #add tiles in extent
+    for item in fs1:
+        level.tileset.insert(0,item)
+    for item in fs2:
+        level.collisionData.insert(0,item)
+    for item in fs3:
+        level.flipmap.insert(0,item)
+
+    #update level items to accomodate for new ceiling
+    for obj in editObjs:
+        if editObjs.get(obj)[3] < camlocus[0]+256:
+            editObjs.get(obj)[4] += objmoveamt*8
+
+    for item in range(len(level.animList)):
+        level.animList[item][1] += objmoveamt
+        print(level.animList[item][1])
+
+    #set level size for growth purposes
+    level.setMaxis()
+
+def screenAddLeft(level):
+    global fullscreen
+    #amount to move stuff right
+    objmoveamt = len(fullscreen[0])
+    fs1 = []
+    fs2 = []
+    fs3 = []
+    fs1 = copy.deepcopy(fullscreen)
+    fs2 = copy.deepcopy(fullscreen)
+    fs3 = copy.deepcopy(fullscreen)
+    #get location of camera
+    global mainCam
+    camlocus = [mainCam.xpos, mainCam.ypos]
+
+    #for every row that preceeds the current y of screen
+    for row in range(int((camlocus[1]-camlocus[1]%8)/8)):
+        #add a row of none
+        fs1.insert(row,[])
+        fs2.insert(row,[])
+        fs3.insert(row,[])
+        for column in range(32):
+            fs1[row].insert(0,"None")
+            fs2[row].insert(0,"None")
+            fs3[row].insert(0,"None")
+    #for every row that follows the current y of screen
+    for row in range(int((camlocus[1]-camlocus[1]%8)/8)+30, len(level.collisionData)):
+        #add a row of none
+        fs1.insert(row,[])
+        fs2.insert(row,[])
+        fs3.insert(row,[])
+        for column in range(32):
+            #print(row)
+            fs1[row].insert(0,"None")
+            fs2[row].insert(0,"None")
+            fs3[row].insert(0,"None")
+
+    #for row in fs1
+    for row in range(len(fs1)):
+        #for tile in row
+        for tile in range(len(fs1[row])):
+            #if a tile exists at the proposed coordinates
+            if level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)-32+tile] == "None":
+                #proposed tile = tile
+                level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)-32+tile] = 0
+                level.flipmap[row][int((camlocus[0]-camlocus[0]%8)/8)-32+tile] = 0
+                level.tileset[row][int((camlocus[0]-camlocus[0]%8)/8)-32+tile] = 0
+                #remove tile from row
+                fs1[row].pop(0)
+                fs2[row].pop(0)
+                fs3[row].pop(0)
+            elif level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)-32+tile] >= 0 and (int((camlocus[0]-camlocus[0]%8)/8)-32+tile >= 0):
+                fs1[row].pop(0)
+                fs2[row].pop(0)
+                fs3[row].pop(0)
+    #add to lists
+    for row in range(len(fs1)):
+        if len(fs1[row]) > 0:
+            for column in range(len(fs1[1])):
+                #print(fs1[row])
+                level.tileset[row].insert(column,fs1[row][column])
+                level.collisionData[row].insert(column,fs2[row][column])
+                level.flipmap[row].insert(column,fs3[row][column])
+
+    #set obj move amt
+    longest = 0
+    for row in range(len(fs1)):
+        if len(fs1[row]) > len(fs1[longest]):
+            longest = row
+    objmoveamt = len(fs1[longest])
+
+    #update level items to accomodate for new wall
+    for obj in editObjs:
+        editObjs.get(obj)[3] += objmoveamt*8
+
+    for item in range(len(level.animList)):
+        level.animList[item][0] += objmoveamt
+
+    #set level size for growth purposes
+    level.setMaxis()
+        
+def screenAddRight(level):
+    global fullscreen
+    #amount to move stuff right
+    objmoveamt = len(fullscreen[0])
+    fs1 = []
+    fs2 = []
+    fs3 = []
+    fs1 = copy.deepcopy(fullscreen)
+    fs2 = copy.deepcopy(fullscreen)
+    fs3 = copy.deepcopy(fullscreen)
+    #get location of camera
+    global mainCam
+    camlocus = [mainCam.xpos, mainCam.ypos]
+
+    #for every row that preceeds the current y of screen
+    for row in range(int((camlocus[1]-camlocus[1]%8)/8)):
+        #add a row of none
+        fs1.insert(row,[])
+        fs2.insert(row,[])
+        fs3.insert(row,[])
+        for column in range(32):
+            fs1[row].insert(0,"None")
+            fs2[row].insert(0,"None")
+            fs3[row].insert(0,"None")
+    #for every row that follows the current y of screen
+    for row in range(int((camlocus[1]-camlocus[1]%8)/8)+30, len(level.collisionData)):
+        #add a row of none
+        fs1.insert(row,[])
+        fs2.insert(row,[])
+        fs3.insert(row,[])
+        for column in range(32):
+            #print(row)
+            fs1[row].insert(0,"None")
+            fs2[row].insert(0,"None")
+            fs3[row].insert(0,"None")
+
+    #for row in fs1
+    for row in range(len(fs1)):
+        #for tile in rows
+        for tile in range(len(fs1[row])):
+            #if a tile exists at the proposed coordinates
+            try:
+                if level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)+32+tile] == "None":
+                    #proposed tile = tile
+                    level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)+32+tile] = 0
+                    level.flipmap[row][int((camlocus[0]-camlocus[0]%8)/8)+32+tile] = 0
+                    level.tileset[row][int((camlocus[0]-camlocus[0]%8)/8)+32+tile] = 0
+                    #remove tile from row
+                    fs1[row].pop(0)
+                    fs2[row].pop(0)
+                    fs3[row].pop(0)
+                elif level.collisionData[row][int((camlocus[0]-camlocus[0]%8)/8)+32+tile] >= 0:
+                    fs1[row].pop(0)
+                    fs2[row].pop(0)
+                    fs3[row].pop(0)
+            except:
+                if int((camlocus[0]-camlocus[0]%8)/8)+32 > len(level.collisionData[row]):
+                    fs1[row].insert(0,"None")
+                    fs2[row].insert(0,"None")
+                    fs3[row].insert(0,"None")
+    #add to lists
+    for row in range(len(fs1)):
+        if len(fs1[row]) > 0:
+            for column in range(len(fs1[row])):
+                #print(fs1[row])
+                level.tileset[row].append(fs1[row][column])
+                level.collisionData[row].append(fs2[row][column])
+                level.flipmap[row].append(fs3[row][column])
+
+    #set obj move amt
+    longest = 0
+    for row in range(len(fs1)):
+        if len(fs1[row]) > len(fs1[longest]):
+            longest = row
+    objmoveamt = len(fs1[longest])
+
+    #update level items to accomodate for new wall
+    for obj in editObjs:
+        editObjs.get(obj)[3] -= objmoveamt*8
+
+    for item in range(len(level.animList)):
+        level.animList[item][0] -= objmoveamt
+
+    #set level size for growth purposes
+    level.setMaxis()
 
 def objPlace(level,camera):
     global lclick
@@ -254,16 +597,16 @@ def objPlace(level,camera):
                     editname = f"{name}{loop}"
                 else:
                     break
-            editObjs.update({editname: [Datafile[editname][0],
+            editObjs.update({editname: [Datafile["Objects"][name][0],
              "2",
-              editName,
-               Datafile[editname][1],
+              name,
                 cursorSpot[0]+camera.xpos,
                  cursorSpot[1]+camera.ypos,
                   "Objects",
                    "charLayer",
-                   Datafile["editname"][2],
-                    "HOST"]})
+                   Datafile["Objects"][name][1],
+                    Datafile["Objects"][name][2]]})
+            print(Datafile["Objects"][name][2])
             lclick = True
     else:
         lclick = False
@@ -358,18 +701,27 @@ def collisionCheck(point,level, camera):
     #find what tile type they are on
     tilecountx = ((point[0]+camera.xpos)//8)
     tilecounty = ((point[1]-camera.ypos%8)//8)
-    tilenum = str(level.collisionData[tilecounty][tilecountx])
-    tiletype = (Datafile["Tilekey"][tilenum])
-    #print(tiletype)
-    if itr < 30:
-        pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
-        itr += 1
-    elif itr > 0:
-        pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
-        itr -= 1
-    """if tiletype != "Air":
-            if level.file["FlipMap"][tilecounty][tilecountx] != 0:
-                    print("flipped")
-                    time.wait(1)"""
-    return tiletype
+    try:
+        tilenum = str(level.collisionData[tilecounty][tilecountx])
+        tiletype = (Datafile["Tilekey"][tilenum])
+        #print(tiletype)
+        if itr < 30:
+            pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
+            itr += 1
+        elif itr > 0:
+            pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
+            itr -= 1
+        """if tiletype != "Air":
+                if level.file["FlipMap"][tilecounty][tilecountx] != 0:
+                        print("flipped")
+                        time.wait(1)"""
+        return tiletype
+    except:
+        if itr < 30:
+            pygame.draw.rect(displayPane,(0,0,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
+            itr += 1
+        elif itr > 0:
+            pygame.draw.rect(displayPane,(200,200,255,0),(point[0]-point[0]%8-camera.xpos%8,point[1]-point[1]%8-camera.ypos%8,8,8),1)
+            itr -= 1
+        return "Air"
 main()

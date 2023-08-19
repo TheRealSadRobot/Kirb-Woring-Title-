@@ -1011,6 +1011,15 @@ class Object:
                 return True
             else:
                 return False
+    def pause(self):
+        #if level pauseobj is self:
+        if self.currentLevel.pauseobj == self:
+            #turn it to null
+            self.currentLevel.pauseobj = None
+        #else if it's none
+        elif self.currentLevel.pauseobj == None:
+            #turn it to me
+            self.currentLevel.pauseobj = self
 
 class Character(Object):
     def __init__(self, ID, charName, xlocation, ylocation, arrayDestination, renderLayer, pallate, Level, Uniques):
@@ -1137,6 +1146,7 @@ class Player(Character):
         self.attack = False
         self.startInhale = False
         self.respawnpoint = (xlocation,ylocation)
+        self.pausedown = False
 
     def update(self,cam):
         #self.walk()
@@ -1183,6 +1193,15 @@ class Player(Character):
         self.wasBlockedTop = self.blockedTop
         self.wasGrounded = self.grounded
         #print(self.location)
+
+    def pausePlayerScript(self):
+        self.keys = pygame.key.get_pressed()
+        if self.keys[pygame.K_RETURN]:
+            if self.pausedown == False:
+                self.pause()
+                self.pausedown = True
+        else:
+            self.pausedown = False
 
     def goalGamePlayerScript(self):
         self.collideWithObj()
@@ -1236,6 +1255,12 @@ class Player(Character):
         if self.keys[pygame.K_i]:
             self.Kill()
             self.climb = False
+        if self.keys[pygame.K_RETURN]:
+            if self.pausedown == False:
+                self.pause()
+                self.pausedown = True
+        else:
+            self.pausedown = False
         if self.keys[pygame.K_c]:
             #self.mode = "goalgamejump"
             if self.ability == "copy":

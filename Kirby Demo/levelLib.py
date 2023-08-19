@@ -28,6 +28,7 @@ class Level:
         self.animList = self.file.get("animList")
         self.animTimer = []
         self.animFrames = []
+        self.pauseobj = None
         for num in range(len(self.animList)):
             self.animTimer.append(0)
             self.animFrames.append(0)
@@ -51,25 +52,30 @@ class Level:
             if self.animFrames[item] >= len(Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]]):
                 #move back to first frame
                 self.animFrames[item] = 0
-            if Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "Layout":
-                toEdit = self.collisionData
-            elif Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "FlipMap":
-                toEdit = self.flipmap
-            elif Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "Tileset":
-                toEdit = self.tileset
-            toEdit[self.animList[item][1]][self.animList[item][0]] = Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][1]
+            #print(self.tileset[0])
+            self.applyanim(item)
+            
+            #toEdit[self.animList[item][1]][self.animList[item][0]] = Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][1]
+            #print(self.tileset[0])
             #print()
         for y in range(len(self.collisionData)):
             if y*8-camera.ypos<248 and y*8-camera.ypos>=-8:
                 for x in range(len(self.collisionData[y])):
                     if x*8-camera.xpos<264 and x*8-camera.xpos>=-8:
                         #NOTE: graphicsData[Datafile["Themekey"][str(self.file["Tileset"][y][x])]] will access the theme
-                        graphics = self.__graphicsData.get(Datafile["Tilekey"][str(self.collisionData[y][x])])
                         tile = pygame.Surface((8,8))
-                        tile.blit(Sheet, (0,0), (graphics[0],graphics[1],8,8))
-                        pallatename = Datafile["Pallatekey"][str(self.tileset[y][x])]
-                        pallate = Datafile["Pallates"][pallatename]
-                        tile = self.pallateApply(pallate,tile)
+                        try:
+                            graphics = self.__graphicsData.get(Datafile["Tilekey"][str(self.collisionData[y][x])])
+                            tile.blit(Sheet, (0,0), (graphics[0],graphics[1],8,8))
+                        except:
+                            pass
+                        var = str(self.tileset[y][x])
+                        try:
+                            pallatename = Datafile["Pallatekey"][var]
+                            pallate = Datafile["Pallates"][pallatename]
+                            tile = self.pallateApply(pallate,tile)
+                        except:
+                            pass
                         if self.file["FlipMap"][y][x] == 1:
                             Receptacle.blit(pygame.transform.flip(tile,1,0), ((x*8)-camera.xpos,(y*8)-camera.ypos))
                         elif self.file["FlipMap"][y][x] == 2:
@@ -78,6 +84,15 @@ class Level:
                             Receptacle.blit(pygame.transform.flip(tile,1,1), ((x*8)-camera.xpos,(y*8)-camera.ypos))
                         else:
                             Receptacle.blit(tile, ((x*8)-camera.xpos,(y*8)-camera.ypos))
+
+    def applyanim(self,item):
+        setTo = Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][1]
+        if Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "Layout":
+            self.collisionData[self.animList[item][1]][self.animList[item][0]] = setTo
+        elif Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "FlipMap":
+            self.flipmap[self.animList[item][1]][self.animList[item][0]] = setTo
+        elif Datafile["TileAnimations"][self.animList[item][2]][self.animFrames[item]][0] == "Tileset":
+            self.tileset[self.animList[item][1]][self.animList[item][0]] = setTo
 
     def pallateApply(self, pallate, sprite):
         #for each color in sprite:
@@ -100,3 +115,6 @@ class Level:
             if len(self.collisionData[y]) > len(self.collisionData[longest]):
                 longest = y
         return len(self.collisionData[longest])
+    def setMaxis(self):
+        self.maxiX = self.getMaxiX()
+        self.maxiY = len(self.collisionData)
