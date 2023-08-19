@@ -189,8 +189,8 @@ class Object:
             pass
 
     def setCollideBoxSize(self,xSize,ySize):
-        if self.crouching==True:
-            print("yee")
+        """if self.crouching==True:
+            print("yee")"""
         self.sizex = xSize
         self.sizey = ySize
         self.getpoints()
@@ -353,7 +353,6 @@ class Object:
             topDist = self.distanceToNotCollideInRange(self.location,1,-1)
             bottomDist = self.distanceToNotCollideInRange(self.location,1,1)
             distList = [topDist, rightDist, bottomDist, leftDist]
-            print(distList)
             #distNameList = ["TOP","RIGHT","BOTTOM","LEFT"]
             finalDistIndex = 0
             for index in range(len(distList)):
@@ -361,8 +360,6 @@ class Object:
                 if abs(distList[index]) < abs(distList[finalDistIndex]):
                     finalDistIndex = index
                     #print(f"Switching to {distNameList[index]}")
-            print(finalDistIndex)
-            print(distList[finalDistIndex])
             if finalDistIndex == 0 or finalDistIndex == 2:
                 self.location[1] += distList[finalDistIndex]
             else:
@@ -529,9 +526,9 @@ class Object:
         except:
             pass"""
         try:
-            tilecountx = (point[0]//8)
+            tilecountx = int(point[0]//8)
             ##print(f"{self.charName} {self.pallateName} has it's x test")
-            tilecounty = (point[1]//8)
+            tilecounty = int(point[1]//8)
             ##print(f"{self.charName} {self.pallateName} has it's y test")
             ##print(tilecountx,tilecounty)
             tilenum = str(self.currentLevel.collisionData[tilecounty][tilecountx])
@@ -574,8 +571,6 @@ class Object:
                             if point[1] >= obj.top[1] and point[1] <= obj.bottom[1]:
                                 return True
             #find what tile type they are on
-            if isinstance(self, Player):
-                print(self.speed)
             tilecountx = int(point[0]//8)
             if point[0] <= 0 or point[1] <= 0:
                 return True
@@ -856,7 +851,8 @@ class Object:
             pass
         
     def wait(self):
-        #self.speed[0] = 0
+        if self.speed[0] > 0 or self.speed[0] < 0:
+            self.speed[0] = int(self.speed[0]/2)
         if self.climb == False:
             if self.grounded == True:
                 if self.crouching == False:
@@ -1320,9 +1316,9 @@ class Player(Character):
                         self.ladderUp()
                     elif self.submerged > 2:
                         self.swimUp()
-            if self.keys[pygame.K_z]:
+            """if self.keys[pygame.K_z]:
                 #print(self.speed[1])
-                print(self.ladderCollide)
+                print(self.ladderCollide)"""
             if self.keys[pygame.K_DOWN]:
                 if self.submerged > 2:
                     self.swimDown()
@@ -1701,7 +1697,6 @@ class platform(Object):
         self.drawPoints()
 
     def childMove(self):
-        print(self.collide)
         for obj in self.collide:
             if issubclass(type(obj),Character) and obj.location[1] <= self.top[1] and obj.grounded == True:
                 if self.semisolid == False:
@@ -1831,14 +1826,12 @@ class door(Object):
         self.drawPoints()
     def interact(self,trigger):
         if self.func=="load":
-            print(trigger.objlist)
             todelete = []
             for obj in trigger.objlist:
                 if obj != trigger:
                     todelete.append(obj)
             for obj in todelete:
                 obj.delete()
-            print(trigger.objlist)
             trigger.currentLevel.__init__("Castle", "TestRoom1",trigger.objlist,trigger.renderLayer)
             trigger.currentLevel.loadLevel(trigger.renderLayer, trigger.camera)
             trigger.location[0] = self.dest[0]
